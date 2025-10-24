@@ -1,44 +1,63 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Smile, Meh, Frown, Heart, Sun, Cloud, Star } from "lucide-react";
+import { Smile, Meh, Frown, Heart, Sun, Cloud, Star, TrendingUp, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import moodIllustration from "@/assets/mood-illustration.png";
 
 const Mood = () => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
   const moods = [
-    { icon: Smile, label: "Happy", color: "text-success", bg: "bg-success/10 hover:bg-success/20" },
-    { icon: Heart, label: "Grateful", color: "text-accent", bg: "bg-accent/10 hover:bg-accent/20" },
-    { icon: Sun, label: "Energetic", color: "text-zen-star", bg: "bg-zen-star/10 hover:bg-zen-star/20" },
-    { icon: Meh, label: "Calm", color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20" },
-    { icon: Cloud, label: "Tired", color: "text-muted-foreground", bg: "bg-muted hover:bg-muted/80" },
-    { icon: Frown, label: "Sad", color: "text-destructive", bg: "bg-destructive/10 hover:bg-destructive/20" },
+    { icon: Smile, label: "Happy", color: "text-success", bg: "bg-success/10 hover:bg-success/20", emoji: "😊" },
+    { icon: Heart, label: "Grateful", color: "text-accent", bg: "bg-accent/10 hover:bg-accent/20", emoji: "💖" },
+    { icon: Sun, label: "Energetic", color: "text-zen-star", bg: "bg-zen-star/10 hover:bg-zen-star/20", emoji: "⚡" },
+    { icon: Meh, label: "Calm", color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20", emoji: "😌" },
+    { icon: Cloud, label: "Tired", color: "text-muted-foreground", bg: "bg-muted hover:bg-muted/80", emoji: "😴" },
+    { icon: Frown, label: "Sad", color: "text-destructive", bg: "bg-destructive/10 hover:bg-destructive/20", emoji: "😢" },
   ];
 
   const stats = [
-    { label: "This Week", value: "Mostly Happy 😊", color: "text-success" },
-    { label: "Last Month", value: "Calm Journey 🌊", color: "text-primary" },
-    { label: "Streak", value: "7 Days 🔥", color: "text-accent" },
+    { label: "This Week", value: "Mostly Happy", emoji: "😊", color: "text-success", progress: 85 },
+    { label: "Last Month", value: "Calm Journey", emoji: "🌊", color: "text-primary", progress: 70 },
+    { label: "Streak", value: "7 Days", emoji: "🔥", color: "text-accent", progress: 100 },
   ];
 
   return (
     <div className="min-h-screen pb-20 md:pt-20">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12 animate-slide-up">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-              How Are You Feeling?
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Track your emotional journey with love and care
-            </p>
+        <div className="max-w-5xl mx-auto">
+          {/* Header with Illustration */}
+          <div className="grid md:grid-cols-2 gap-8 items-center mb-12">
+            <div className="order-2 md:order-1 text-center md:text-left animate-slide-up">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent mb-4">
+                <Heart className="w-4 h-4 animate-pulse-soft" />
+                <span className="text-sm font-medium">Mood Tracker</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                How Are You Feeling?
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Track your emotional journey with love and care. Every feeling matters, and we're here to support you.
+              </p>
+            </div>
+
+            <div className="order-1 md:order-2 animate-slide-up" style={{ animationDelay: "200ms" }}>
+              <img 
+                src={moodIllustration} 
+                alt="Person holding emotion cards" 
+                className="w-full h-auto drop-shadow-2xl rounded-3xl animate-float"
+              />
+            </div>
           </div>
 
           {/* Mood Selector */}
           <Card className="mb-8 animate-slide-up border-2 shadow-float" style={{ animationDelay: "100ms" }}>
             <CardHeader>
-              <CardTitle>Today's Mood</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-zen-star animate-twinkle" />
+                Today's Mood Check-In
+              </CardTitle>
               <CardDescription>Select the emotion that best describes how you feel right now</CardDescription>
             </CardHeader>
             <CardContent>
@@ -53,12 +72,15 @@ const Mood = () => {
                       variant="outline"
                       onClick={() => setSelectedMood(mood.label)}
                       className={cn(
-                        "h-24 flex-col gap-2 transition-all duration-300 border-2",
+                        "h-28 flex-col gap-3 transition-all duration-300 border-2",
                         mood.bg,
                         isSelected && "ring-2 ring-primary scale-105 shadow-glow"
                       )}
                     >
-                      <Icon className={cn("w-8 h-8", mood.color, isSelected && "animate-bounce-in")} />
+                      <div className="flex items-center gap-2">
+                        <Icon className={cn("w-6 h-6", mood.color, isSelected && "animate-bounce-in")} />
+                        <span className="text-2xl">{mood.emoji}</span>
+                      </div>
                       <span className="text-sm font-medium">{mood.label}</span>
                     </Button>
                   );
@@ -66,10 +88,10 @@ const Mood = () => {
               </div>
               
               {selectedMood && (
-                <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20 animate-slide-up">
+                <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border-2 border-primary/20 animate-slide-up">
                   <p className="text-sm text-center">
                     You're feeling <span className="font-semibold text-primary">{selectedMood}</span> today. 
-                    That's wonderful to acknowledge! 💙
+                    That's wonderful to acknowledge! 💙 Remember, all feelings are valid and part of your journey.
                   </p>
                 </div>
               )}
@@ -81,52 +103,107 @@ const Mood = () => {
             {stats.map((stat, index) => (
               <Card 
                 key={stat.label}
-                className="text-center animate-slide-up border-2 hover:shadow-float transition-all"
+                className="animate-slide-up border-2 hover:shadow-float transition-all overflow-hidden"
                 style={{ animationDelay: `${(index + 2) * 100}ms` }}
               >
-                <CardHeader>
-                  <CardDescription>{stat.label}</CardDescription>
-                  <CardTitle className={cn("text-2xl", stat.color)}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardDescription className="text-xs">{stat.label}</CardDescription>
+                    <span className="text-2xl animate-float" style={{ animationDelay: `${index * 0.5}s` }}>
+                      {stat.emoji}
+                    </span>
+                  </div>
+                  <CardTitle className={cn("text-xl", stat.color)}>
                     {stat.value}
                   </CardTitle>
                 </CardHeader>
+                <CardContent className="pb-4">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className={cn("h-full rounded-full transition-all duration-1000", stat.color.replace('text-', 'bg-'))}
+                      style={{ width: `${stat.progress}%` }}
+                    />
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Mood Chart Placeholder */}
-          <Card className="animate-slide-up border-2" style={{ animationDelay: "500ms" }}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-zen-star animate-twinkle" />
-                Your Emotional Journey
-              </CardTitle>
-              <CardDescription>Visual representation of your moods over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 rounded-lg bg-gradient-to-r from-primary/5 via-accent/5 to-secondary/5 flex items-center justify-center border-2 border-dashed">
-                <div className="text-center text-muted-foreground">
-                  <p className="text-lg mb-2">📊 Mood Chart Coming Soon</p>
-                  <p className="text-sm">Track your emotions day by day</p>
+          {/* Mood Insights */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <Card className="animate-slide-up border-2" style={{ animationDelay: "500ms" }}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingUp className="w-5 h-5 text-success" />
+                  Weekly Pattern
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
+                    <div key={day} className="flex items-center gap-3">
+                      <span className="text-sm font-medium w-10">{day}</span>
+                      <div className="flex-1 h-6 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-primary to-success rounded-full transition-all"
+                          style={{ width: `${Math.random() * 50 + 30}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-slide-up border-2" style={{ animationDelay: "600ms" }}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Calendar className="w-5 h-5 text-accent" />
+                  Month Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: 28 }).map((_, i) => {
+                    const moods = ['success', 'primary', 'accent', 'muted'];
+                    const mood = moods[Math.floor(Math.random() * moods.length)];
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          "aspect-square rounded-lg transition-all hover:scale-110",
+                          `bg-${mood}`
+                        )}
+                        title={`Day ${i + 1}`}
+                      />
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Reflection Card */}
-          <Card className="mt-8 bg-gradient-to-r from-accent/10 to-secondary/10 border-2 animate-slide-up" style={{ animationDelay: "600ms" }}>
+          <Card className="bg-gradient-to-r from-accent/10 to-secondary/10 border-2 animate-slide-up" style={{ animationDelay: "700ms" }}>
             <CardHeader>
-              <CardTitle>💭 Daily Reflection</CardTitle>
-              <CardDescription>Write down what made you feel this way (optional)</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                💭 Daily Reflection
+              </CardTitle>
+              <CardDescription>Write down what made you feel this way (optional but encouraged)</CardDescription>
             </CardHeader>
             <CardContent>
               <textarea 
-                className="w-full h-32 p-4 rounded-lg border-2 bg-card resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                placeholder="Today I felt..."
+                className="w-full h-32 p-4 rounded-xl border-2 bg-card resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                placeholder="Today I felt this way because..."
               />
-              <Button className="mt-4 w-full md:w-auto">
-                Save Reflection
-              </Button>
+              <div className="flex gap-3 mt-4">
+                <Button className="flex-1">
+                  Save Reflection
+                </Button>
+                <Button variant="outline" className="border-2">
+                  Skip for Now
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

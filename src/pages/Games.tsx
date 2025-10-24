@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Puzzle, ChefHat, Palette, Brain, Sparkles, Smile, Home } from "lucide-react";
+import { Puzzle, ChefHat, Palette, Brain, Sparkles, Smile, Home, Trophy, Star } from "lucide-react";
+import gamesIllustration from "@/assets/games-illustration.png";
 
 const Games = () => {
   const games = [
@@ -11,6 +12,7 @@ const Games = () => {
       levels: 12,
       color: "from-primary to-primary-glow",
       badge: "Relaxing",
+      difficulty: "Easy",
     },
     {
       icon: ChefHat,
@@ -19,6 +21,7 @@ const Games = () => {
       levels: 15,
       color: "from-accent to-destructive",
       badge: "Creative",
+      difficulty: "Medium",
     },
     {
       icon: Palette,
@@ -27,6 +30,7 @@ const Games = () => {
       levels: "∞",
       color: "from-secondary to-accent",
       badge: "Expressive",
+      difficulty: "All Levels",
     },
     {
       icon: Brain,
@@ -35,6 +39,7 @@ const Games = () => {
       levels: 10,
       color: "from-success to-primary",
       badge: "Mindful",
+      difficulty: "Easy",
     },
     {
       icon: Sparkles,
@@ -43,6 +48,7 @@ const Games = () => {
       levels: 8,
       color: "from-zen-sky to-zen-star",
       badge: "Magical",
+      difficulty: "Easy",
     },
     {
       icon: Smile,
@@ -51,6 +57,7 @@ const Games = () => {
       levels: 20,
       color: "from-muted to-success",
       badge: "Joyful",
+      difficulty: "Medium",
     },
     {
       icon: Home,
@@ -59,22 +66,39 @@ const Games = () => {
       levels: 18,
       color: "from-zen-sand to-zen-leaf",
       badge: "Peaceful",
+      difficulty: "Medium",
     },
   ];
 
   return (
     <div className="min-h-screen pb-20 md:pt-20">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto text-center mb-12 animate-slide-up">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-            Play Zone
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Choose a game that matches your mood. Each one is designed to bring you joy and calm.
-          </p>
+        {/* Header with Illustration */}
+        <div className="grid md:grid-cols-2 gap-8 items-center max-w-5xl mx-auto mb-12">
+          <div className="text-center md:text-left animate-slide-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+              <Trophy className="w-4 h-4" />
+              <span className="text-sm font-medium">Play Zone</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+              Healing Through Play
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Choose a game that matches your mood. Each one is designed to bring you joy and calm while gently supporting your emotional wellbeing.
+            </p>
+          </div>
+
+          <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
+            <img 
+              src={gamesIllustration} 
+              alt="Happy people playing games" 
+              className="w-full h-auto drop-shadow-2xl rounded-3xl animate-float"
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Games Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {games.map((game, index) => {
             const Icon = game.icon;
             return (
@@ -100,13 +124,19 @@ const Games = () => {
                     {game.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="text-muted-foreground">
                       <span className="font-semibold text-foreground">{game.levels}</span> Levels
                     </div>
-                    <div className="text-sm font-medium text-primary group-hover:scale-110 transition-transform">
-                      Play Now →
+                    <div className="px-3 py-1 rounded-full bg-muted text-xs">
+                      {game.difficulty}
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <div className="text-sm font-medium text-primary group-hover:scale-105 transition-transform inline-flex items-center gap-1">
+                      Play Now 
+                      <Star className="w-3 h-3 fill-primary" />
                     </div>
                   </div>
                 </CardContent>
@@ -115,14 +145,56 @@ const Games = () => {
           })}
         </div>
 
-        <Card className="mt-12 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-2 animate-slide-up">
+        {/* Features Info */}
+        <div className="grid md:grid-cols-2 gap-6 mt-12 max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 animate-slide-up">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary animate-twinkle" />
+                AI Emotion Tracking
+              </CardTitle>
+              <CardDescription className="text-base">
+                Our gentle AI observes your play style — speed, color choices, and interactions — 
+                to better understand your emotional state and suggest the perfect game for you.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-accent/10 to-success/10 border-2 animate-slide-up" style={{ animationDelay: "100ms" }}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-accent" />
+                Earn Rewards
+              </CardTitle>
+              <CardDescription className="text-base">
+                Collect stars, leaves, and tokens as you play. Use them in other sections like the Zen Garden 
+                to unlock special features and customize your experience.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+
+        {/* Progress Card */}
+        <Card className="mt-8 max-w-2xl mx-auto border-2 animate-slide-up" style={{ animationDelay: "200ms" }}>
           <CardHeader>
-            <CardTitle className="text-center">🎮 AI Emotion Tracking</CardTitle>
-            <CardDescription className="text-center text-base">
-              Our gentle AI observes your play style — speed, color choices, and interactions — 
-              to better understand your emotional state and suggest the perfect game for you.
-            </CardDescription>
+            <CardTitle className="text-center">🎮 Your Gaming Progress</CardTitle>
           </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-primary mb-1">47</div>
+                <div className="text-xs text-muted-foreground">Games Played</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-accent mb-1">156</div>
+                <div className="text-xs text-muted-foreground">Stars Earned</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-success mb-1">12</div>
+                <div className="text-xs text-muted-foreground">Achievements</div>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>
