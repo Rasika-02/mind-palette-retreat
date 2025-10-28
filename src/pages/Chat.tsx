@@ -51,9 +51,15 @@ const Chat = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-20 md:pt-20">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen pb-20 md:pt-20 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+      </div>
+
+      <div className="container mx-auto px-6 md:px-8 lg:px-12 py-8 md:py-12">
+        <div className="max-w-5xl mx-auto">
           {/* Header with Illustration */}
           <div className="grid md:grid-cols-2 gap-8 items-center mb-8">
             <div className="order-2 md:order-1 text-center md:text-left animate-slide-up">

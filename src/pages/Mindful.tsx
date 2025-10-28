@@ -56,9 +56,15 @@ const Mindful = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20 md:pt-20">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen pb-20 md:pt-20 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "1.5s" }} />
+      </div>
+
+      <div className="container mx-auto px-6 md:px-8 lg:px-12 py-8 md:py-12">
+        <div className="max-w-7xl mx-auto">
           {/* Header with Illustration */}
           <div className="grid md:grid-cols-2 gap-8 items-center mb-12">
             <div className="text-center md:text-left animate-slide-up">
@@ -261,8 +267,8 @@ const Mindful = () => {
                 <Music className="w-8 h-8 mx-auto mb-2 text-accent animate-float" />
                 <p>Personalized music recommendations coming soon!</p>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
         </div>
       </div>
     </div>

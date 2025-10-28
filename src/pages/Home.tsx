@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, Gamepad2, Heart, Flower2, MessageCircle, Sun, ArrowRight, Star, Shield, Users, Zap, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import heroIllustration from "@/assets/hero-illustration.png";
 
 const Home = () => {
@@ -59,9 +60,14 @@ const Home = () => {
         <div className="absolute bottom-0 right-1/3 w-72 h-72 bg-primary/15 rounded-full blob opacity-50" style={{ animationDelay: "6s" }} />
       </div>
 
+      {/* Background Pattern */}
+      <div className="fixed inset-0 -z-10 opacity-5">
+        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, hsl(var(--primary)) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+      </div>
+
       {/* Hero Section with Illustration */}
-      <section className="container mx-auto px-6 py-16 md:py-24 relative">
-        <div className="grid md:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
+      <section className="container mx-auto px-6 md:px-8 lg:px-12 py-20 md:py-28 relative">
+        <div className="grid md:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
           <div className="text-center md:text-left animate-slide-up space-y-6">
             <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border border-primary/20 mb-4">
               <Sparkles className="w-4 h-4 animate-twinkle" />
@@ -118,48 +124,63 @@ const Home = () => {
         </div>
       </section>
 
-      {/* What Makes Us Special */}
-      <section className="container mx-auto px-6 py-16 md:py-20">
+      {/* What Makes Us Special - Carousel */}
+      <section className="container mx-auto px-6 md:px-8 lg:px-12 py-20 md:py-24">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12 animate-slide-up">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
+          <div className="text-center mb-16 animate-slide-up space-y-4">
+            <h2 className="text-4xl md:text-5xl font-bold">
               Why Choose MindCanvas?
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
               A complete mental wellness platform designed with care, creativity, and scientific backing
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Gamepad2, title: "7+ Healing Games", desc: "Therapeutic play for mood regulation", color: "primary" },
-              { icon: MessageCircle, title: "24/7 AI Companion", desc: "Always here when you need support", color: "secondary" },
-              { icon: Moon, title: "Zen Sanctuary", desc: "Your personal digital retreat", color: "accent" },
-              { icon: Shield, title: "100% Private", desc: "Your data stays yours, always", color: "success" }
-            ].map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <Card 
-                  key={item.title}
-                  className="text-center border-2 hover:shadow-float transition-all hover:-translate-y-1 animate-slide-up bg-card/50 backdrop-blur-sm"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <CardContent className="pt-8 pb-6 px-6">
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-${item.color}/20 to-${item.color}/10 flex items-center justify-center mb-4 mx-auto shadow-soft`}>
-                      <Icon className={`w-8 h-8 text-${item.color}`} />
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.desc}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="max-w-5xl mx-auto">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent>
+                {[
+                  { icon: Gamepad2, title: "7+ Healing Games", desc: "Therapeutic play for mood regulation", color: "primary" },
+                  { icon: MessageCircle, title: "24/7 AI Companion", desc: "Always here when you need support", color: "secondary" },
+                  { icon: Moon, title: "Zen Sanctuary", desc: "Your personal digital retreat", color: "accent" },
+                  { icon: Shield, title: "100% Private", desc: "Your data stays yours, always", color: "success" }
+                ].map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <CarouselItem key={item.title} className="md:basis-1/2 lg:basis-1/3">
+                      <div className="p-2">
+                        <Card 
+                          className="text-center border-2 hover:shadow-float transition-all hover:-translate-y-1 animate-slide-up bg-card/50 backdrop-blur-sm h-full"
+                          style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                          <CardContent className="pt-10 pb-8 px-6 flex flex-col items-center">
+                            <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br from-${item.color}/20 to-${item.color}/10 flex items-center justify-center mb-6 shadow-soft`}>
+                              <Icon className={`w-10 h-10 text-${item.color}`} />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-3">{item.title}</h3>
+                            <p className="text-base text-muted-foreground leading-relaxed">{item.desc}</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
           </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section className="container mx-auto px-6 py-16 md:py-20 relative">
+      <section className="container mx-auto px-6 md:px-8 lg:px-12 py-20 md:py-24 relative">
         <div className="text-center mb-16 animate-slide-up space-y-4">
           <h2 className="text-4xl md:text-5xl font-bold">
             Your Complete Wellness Toolkit
@@ -207,64 +228,64 @@ const Home = () => {
       </section>
 
       {/* How It Works */}
-      <section className="container mx-auto px-6 py-16 md:py-20 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 animate-slide-up">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              How MindCanvas Works
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Simple steps to start your journey toward better mental health
-            </p>
-          </div>
+      <section className="container mx-auto px-6 md:px-8 lg:px-12 py-20 md:py-24">
+        <div className="max-w-6xl mx-auto bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl p-8 md:p-12 lg:p-16">
+            <div className="text-center mb-16 animate-slide-up">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                How MindCanvas Works
+              </h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Simple steps to start your journey toward better mental health
+              </p>
+            </div>
 
-          <div className="grid md:grid-cols-3 gap-8 md:gap-12">
-            {[
-              { 
-                step: "1", 
-                title: "Daily Check-In", 
-                desc: "Start your day by logging how you feel. Track patterns over time with beautiful visualizations.",
-                icon: Heart 
-              },
-              { 
-                step: "2", 
-                title: "Choose Your Path", 
-                desc: "Play therapeutic games, chat with AI, or relax in your zen garden based on your current mood.",
-                icon: Sparkles 
-              },
-              { 
-                step: "3", 
-                title: "See Progress", 
-                desc: "Watch your emotional wellness journey unfold with insights, achievements, and positive patterns.",
-                icon: Star 
-              }
-            ].map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <div 
-                  key={item.step}
-                  className="text-center animate-slide-up space-y-4"
-                  style={{ animationDelay: `${index * 150}ms` }}
-                >
-                  <div className="relative inline-flex items-center justify-center mb-4">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow">
-                      <Icon className="w-10 h-10 text-white" />
+            <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+              {[
+                { 
+                  step: "1", 
+                  title: "Daily Check-In", 
+                  desc: "Start your day by logging how you feel. Track patterns over time with beautiful visualizations.",
+                  icon: Heart 
+                },
+                { 
+                  step: "2", 
+                  title: "Choose Your Path", 
+                  desc: "Play therapeutic games, chat with AI, or relax in your zen garden based on your current mood.",
+                  icon: Sparkles 
+                },
+                { 
+                  step: "3", 
+                  title: "See Progress", 
+                  desc: "Watch your emotional wellness journey unfold with insights, achievements, and positive patterns.",
+                  icon: Star 
+                }
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div 
+                    key={item.step}
+                    className="text-center animate-slide-up space-y-4"
+                    style={{ animationDelay: `${index * 150}ms` }}
+                  >
+                    <div className="relative inline-flex items-center justify-center mb-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow">
+                        <Icon className="w-10 h-10 text-white" />
+                      </div>
+                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-accent text-white font-bold flex items-center justify-center text-sm shadow-soft">
+                        {item.step}
+                      </div>
                     </div>
-                    <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-accent text-white font-bold flex items-center justify-center text-sm shadow-soft">
-                      {item.step}
-                    </div>
+                    <h3 className="text-2xl font-bold">{item.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
                   </div>
-                  <h3 className="text-2xl font-bold">{item.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="container mx-auto px-6 py-16 md:py-20">
+      <section className="container mx-auto px-6 md:px-8 lg:px-12 py-20 md:py-24">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 animate-slide-up">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -295,8 +316,8 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-6 py-16 md:py-20">
-        <Card className="bg-gradient-to-br from-primary/30 via-secondary/20 to-accent/30 border-2 border-primary/30 max-w-4xl mx-auto text-center overflow-hidden animate-slide-up relative">
+      <section className="container mx-auto px-6 md:px-8 lg:px-12 py-20 md:py-24">
+        <Card className="bg-gradient-to-br from-primary/30 via-secondary/20 to-accent/30 border-2 border-primary/30 max-w-5xl mx-auto text-center overflow-hidden animate-slide-up relative">
           <CardContent className="py-16 px-8 md:px-12 relative">
             <div className="absolute top-6 right-6 animate-twinkle">
               <Star className="w-8 h-8 text-accent" />

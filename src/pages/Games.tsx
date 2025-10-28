@@ -71,10 +71,17 @@ const Games = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-20 md:pt-20">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with Illustration */}
-        <div className="grid md:grid-cols-2 gap-8 items-center max-w-5xl mx-auto mb-12">
+    <div className="min-h-screen pb-20 md:pt-20 relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+      </div>
+
+      <div className="container mx-auto px-6 md:px-8 lg:px-12 py-8 md:py-12">
+        <div className="max-w-7xl mx-auto">
+          {/* Header with Illustration */}
+          <div className="grid md:grid-cols-2 gap-8 items-center mb-12">
           <div className="text-center md:text-left animate-slide-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
               <Trophy className="w-4 h-4" />
@@ -94,11 +101,11 @@ const Games = () => {
               alt="Happy people playing games" 
               className="w-full h-auto drop-shadow-2xl rounded-3xl animate-float"
             />
+            </div>
           </div>
-        </div>
 
-        {/* Games Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {/* Games Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {games.map((game, index) => {
             const Icon = game.icon;
             return (
@@ -141,12 +148,12 @@ const Games = () => {
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
 
-        {/* Features Info */}
-        <div className="grid md:grid-cols-2 gap-6 mt-12 max-w-4xl mx-auto">
+          {/* Features Info */}
+          <div className="grid md:grid-cols-2 gap-6 mt-12 max-w-5xl mx-auto">
           <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 animate-slide-up">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -170,12 +177,12 @@ const Games = () => {
                 Collect stars, leaves, and tokens as you play. Use them in other sections like the Zen Garden 
                 to unlock special features and customize your experience.
               </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
+              </CardHeader>
+            </Card>
+          </div>
 
-        {/* Progress Card */}
-        <Card className="mt-8 max-w-2xl mx-auto border-2 animate-slide-up" style={{ animationDelay: "200ms" }}>
+          {/* Progress Card */}
+          <Card className="mt-8 max-w-3xl mx-auto border-2 animate-slide-up" style={{ animationDelay: "200ms" }}>
           <CardHeader>
             <CardTitle className="text-center">🎮 Your Gaming Progress</CardTitle>
           </CardHeader>
@@ -193,9 +200,10 @@ const Games = () => {
                 <div className="text-2xl font-bold text-success mb-1">12</div>
                 <div className="text-xs text-muted-foreground">Achievements</div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -24,9 +24,15 @@ const Mood = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-20 md:pt-20">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen pb-20 md:pt-20 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-40 left-20 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-40 right-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "3s" }} />
+      </div>
+
+      <div className="container mx-auto px-6 md:px-8 lg:px-12 py-8 md:py-12">
+        <div className="max-w-7xl mx-auto">
           {/* Header with Illustration */}
           <div className="grid md:grid-cols-2 gap-8 items-center mb-12">
             <div className="order-2 md:order-1 text-center md:text-left animate-slide-up">
@@ -204,8 +210,8 @@ const Mood = () => {
                   Skip for Now
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
         </div>
       </div>
     </div>
