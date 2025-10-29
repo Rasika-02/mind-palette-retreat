@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Puzzle, ChefHat, Palette, Brain, Sparkles, Smile, Home, Trophy, Star } from "lucide-react";
 import gamesIllustration from "@/assets/games-illustration.png";
+import GameDialog from "@/components/games/GameDialog";
 
 const Games = () => {
+  const [selectedGame, setSelectedGame] = useState<{ title: string; description: string } | null>(null);
+
   const games = [
     {
       icon: Puzzle,
@@ -111,7 +115,8 @@ const Games = () => {
             return (
               <Card 
                 key={game.title}
-                className="group hover:shadow-float transition-all duration-300 hover:-translate-y-2 cursor-pointer overflow-hidden animate-slide-up border-2"
+                onClick={() => setSelectedGame({ title: game.title, description: game.description })}
+                className="group hover:shadow-float transition-all duration-300 hover:-translate-y-2 cursor-pointer overflow-hidden animate-slide-up border-2 active:scale-95"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className={`h-3 bg-gradient-to-r ${game.color}`} />
@@ -205,6 +210,15 @@ const Games = () => {
           </Card>
         </div>
       </div>
+
+      {selectedGame && (
+        <GameDialog
+          gameTitle={selectedGame.title}
+          gameDescription={selectedGame.description}
+          open={!!selectedGame}
+          onOpenChange={(open) => !open && setSelectedGame(null)}
+        />
+      )}
     </div>
   );
 };
