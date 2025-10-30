@@ -1,24 +1,217 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Leaf, Plus, Moon, Star as StarIcon } from "lucide-react";
-import zenIllustration from "@/assets/zen-illustration.png";
+import { Sparkles, Leaf, Plus, Moon, Star, Circle, RotateCcw, Palette } from "lucide-react";
 
 const ZenGarden = () => {
-  const [stars, setStars] = useState<Array<{ x: number; y: number; color: string }>>([]);
-  const [leaves, setLeaves] = useState<string[]>([]);
+  const [stars, setStars] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [stones, setStones] = useState([]);
   const [gratitude, setGratitude] = useState("");
+  const [mode, setMode] = useState("sand");
+  const [isDrawing, setIsDrawing] = useState(false);
+  
+  const canvasRef = useRef(null);
+  const ctxRef = useRef(null);
 
-  const starColors = ["text-zen-star", "text-primary", "text-accent", "text-secondary"];
+  const constellations = {
+    hope: { points: 5, pattern: "Hope", emoji: "⭐", color: "#fbbf24" },
+    peace: { points: 7, pattern: "Peace", emoji: "🕊️", color: "#60a5fa" },
+    growth: { points: 10, pattern: "Growth", emoji: "🌱", color: "#34d399" },
+    joy: { points: 15, pattern: "Joy", emoji: "✨", color: "#f472b6" }
+  };
 
-  const addStar = () => {
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const ctx = canvas.getContext("2d");
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctxRef.current = ctx;
+
+    drawDesertScene(ctx, canvas.width, canvas.height);
+  }, []);
+
+  const drawDesertScene = (ctx, width, height) => {
+    // Sky gradient - beautiful sunset/dusk colors matching home theme
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.6);
+    skyGradient.addColorStop(0, "#1a1a2e");
+    skyGradient.addColorStop(0.3, "#2d1b4e");
+    skyGradient.addColorStop(0.6, "#5a3d6e");
+    skyGradient.addColorStop(1, "#8b6f9e");
+    
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, width, height * 0.6);
+
+    // Stars in the sky
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    for (let i = 0; i < 100; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * (height * 0.5);
+      const size = Math.random() * 1.5;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Moon
+    const moonGradient = ctx.createRadialGradient(width * 0.85, height * 0.15, 5, width * 0.85, height * 0.15, 40);
+    moonGradient.addColorStop(0, "#fffef7");
+    moonGradient.addColorStop(0.7, "#f4e5c9");
+    moonGradient.addColorStop(1, "rgba(244, 229, 201, 0)");
+    ctx.fillStyle = moonGradient;
+    ctx.beginPath();
+    ctx.arc(width * 0.85, height * 0.15, 40, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Horizon glow
+    const horizonGradient = ctx.createLinearGradient(0, height * 0.5, 0, height * 0.7);
+    horizonGradient.addColorStop(0, "rgba(255, 179, 120, 0.3)");
+    horizonGradient.addColorStop(1, "rgba(255, 179, 120, 0)");
+    ctx.fillStyle = horizonGradient;
+    ctx.fillRect(0, height * 0.5, width, height * 0.2);
+
+    // Desert sand - realistic texture with dunes
+    const sandGradient = ctx.createLinearGradient(0, height * 0.6, 0, height);
+    sandGradient.addColorStop(0, "#f5deb3");
+    sandGradient.addColorStop(0.3, "#f4e4c1");
+    sandGradient.addColorStop(0.6, "#e8d4a8");
+    sandGradient.addColorStop(1, "#d9c89e");
+    
+    ctx.fillStyle = sandGradient;
+    ctx.fillRect(0, height * 0.6, width, height * 0.4);
+
+    // Sand texture
+    ctx.fillStyle = "rgba(210, 180, 140, 0.1)";
+    for (let i = 0; i < 3000; i++) {
+      const x = Math.random() * width;
+      const y = height * 0.6 + Math.random() * (height * 0.4);
+      const size = Math.random() * 1.5;
+      ctx.fillRect(x, y, size, size);
+    }
+
+    // Sand dunes - create depth
+    ctx.fillStyle = "rgba(218, 185, 135, 0.3)";
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      const startY = height * 0.65 + i * 50;
+      ctx.moveTo(0, startY);
+      for (let x = 0; x < width; x += 20) {
+        const wave = Math.sin((x + i * 200) * 0.01) * 20;
+        ctx.lineTo(x, startY + wave);
+      }
+      ctx.lineTo(width, height);
+      ctx.lineTo(0, height);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Subtle ripples in sand
+    ctx.strokeStyle = "rgba(205, 170, 125, 0.2)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+      ctx.beginPath();
+      const y = height * 0.7 + i * 20;
+      for (let x = 0; x < width; x += 15) {
+        const wave = Math.sin((x + i * 30) * 0.02) * 2;
+        if (x === 0) {
+          ctx.moveTo(x, y + wave);
+        } else {
+          ctx.lineTo(x, y + wave);
+        }
+      }
+      ctx.stroke();
+    }
+  };
+
+  const startDrawing = (e) => {
+    if (mode !== "sand") return;
+    setIsDrawing(true);
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+    const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+    ctxRef.current.beginPath();
+    ctxRef.current.moveTo(x, y);
+  };
+
+  const draw = (e) => {
+    if (!isDrawing || mode !== "sand") return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+    const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+    
+    const ctx = ctxRef.current;
+    
+    // Darker sand trail
+    ctx.strokeStyle = "rgba(160, 130, 90, 0.6)";
+    ctx.lineWidth = 12;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    
+    // Medium shadow
+    ctx.strokeStyle = "rgba(180, 145, 105, 0.4)";
+    ctx.lineWidth = 8;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    
+    // Light center
+    ctx.strokeStyle = "rgba(230, 210, 180, 0.5)";
+    ctx.lineWidth = 4;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    // Add sand particles
+    for (let i = 0; i < 3; i++) {
+      const offsetX = x + (Math.random() - 0.5) * 15;
+      const offsetY = y + (Math.random() - 0.5) * 15;
+      ctx.fillStyle = "rgba(200, 160, 120, 0.3)";
+      ctx.fillRect(offsetX, offsetY, 1, 1);
+    }
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const handleCanvasClick = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (mode === "star") {
+      addStar(x, y);
+    } else if (mode === "stone") {
+      addStone(x, y);
+    }
+  };
+
+  const addStar = (x = null, y = null) => {
+    const emotions = ["hope", "peace", "joy", "calm", "love"];
+    const colors = ["#fbbf24", "#60a5fa", "#f472b6", "#34d399", "#a78bfa"];
+    
     const newStar = {
-      x: Math.random() * 90,
-      y: Math.random() * 60,
-      color: starColors[Math.floor(Math.random() * starColors.length)],
+      x: x || Math.random() * 90 + 5,
+      y: y || Math.random() * 50,
+      emotion: emotions[Math.floor(Math.random() * emotions.length)],
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: Math.random() * 0.5 + 0.8,
     };
     setStars([...stars, newStar]);
+  };
+
+  const addStone = (x = null, y = null) => {
+    const sizes = ["small", "medium", "large"];
+    const newStone = {
+      x: x || Math.random() * 80 + 10,
+      y: y || (Math.random() * 30 + 65),
+      size: sizes[Math.floor(Math.random() * sizes.length)],
+    };
+    setStones([...stones, newStone]);
   };
 
   const addLeaf = () => {
@@ -28,84 +221,452 @@ const ZenGarden = () => {
     }
   };
 
+  const resetSandGarden = () => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    drawDesertScene(ctx, canvas.width, canvas.height);
+  };
+
+  const clearAll = () => {
+    setStars([]);
+    setLeaves([]);
+    setStones([]);
+    resetSandGarden();
+  };
+
+  const getConstellation = () => {
+    const count = stars.length;
+    if (count >= 15) return constellations.joy;
+    if (count >= 10) return constellations.growth;
+    if (count >= 7) return constellations.peace;
+    if (count >= 5) return constellations.hope;
+    return null;
+  };
+
+  const constellation = getConstellation();
+
+  const getTreeGrowth = () => {
+    const count = leaves.length;
+    return {
+      stage: count >= 20 ? "Ancient" : count >= 15 ? "Flourishing" : count >= 10 ? "Blooming" : count >= 5 ? "Growing" : "Sprouting",
+      height: Math.min(count * 10 + 60, 280),
+      branches: Math.min(Math.floor(count / 2), 12),
+      leafCount: count
+    };
+  };
+
+  const treeGrowth = getTreeGrowth();
+
+  const renderTree = () => {
+    if (leaves.length === 0) return null;
+
+    const { height, branches, leafCount } = treeGrowth;
+    const trunkHeight = height * 0.5;
+    const canopySize = height * 0.6;
+
+    return (
+      <svg
+        width="250"
+        height={height + 40}
+        viewBox={`0 0 250 ${height + 40}`}
+        className="absolute bottom-0 left-8"
+        style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))" }}
+      >
+        {/* Ground integration */}
+        <ellipse
+          cx="125"
+          cy={height + 30}
+          rx="60"
+          ry="15"
+          fill="rgba(139, 115, 85, 0.3)"
+        />
+        
+        {/* Trunk with texture */}
+        <defs>
+          <linearGradient id="trunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#5d4037" />
+            <stop offset="50%" stopColor="#6d4c41" />
+            <stop offset="100%" stopColor="#4e342e" />
+          </linearGradient>
+          <pattern id="barkPattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+            <rect width="8" height="8" fill="#5d4037"/>
+            <path d="M0,4 Q4,2 8,4" stroke="#4e342e" strokeWidth="0.5" fill="none"/>
+          </pattern>
+        </defs>
+        
+        <rect
+          x="105"
+          y={height - trunkHeight + 30}
+          width="40"
+          height={trunkHeight}
+          fill="url(#trunkGrad)"
+          rx="8"
+        />
+        <rect
+          x="105"
+          y={height - trunkHeight + 30}
+          width="40"
+          height={trunkHeight}
+          fill="url(#barkPattern)"
+          opacity="0.4"
+          rx="8"
+        />
+        
+        {/* Trunk highlights */}
+        <rect
+          x="108"
+          y={height - trunkHeight + 30}
+          width="6"
+          height={trunkHeight}
+          fill="rgba(255,255,255,0.1)"
+          rx="3"
+        />
+        
+        {/* Main branches */}
+        {Array.from({ length: branches }).map((_, i) => {
+          const branchY = height - trunkHeight + 40 + (trunkHeight / (branches + 1)) * i;
+          const branchLength = 30 + i * 4;
+          const isLeft = i % 2 === 0;
+          const curve = 20 + i * 2;
+          
+          return (
+            <g key={`branch-${i}`}>
+              <path
+                d={`M125 ${branchY} Q${isLeft ? 125 - curve : 125 + curve} ${branchY - 10} ${isLeft ? 125 - branchLength : 125 + branchLength} ${branchY - 25}`}
+                stroke="url(#trunkGrad)"
+                strokeWidth={6 - i * 0.3}
+                fill="none"
+                strokeLinecap="round"
+              />
+              {/* Branch highlights */}
+              <path
+                d={`M125 ${branchY} Q${isLeft ? 125 - curve : 125 + curve} ${branchY - 10} ${isLeft ? 125 - branchLength : 125 + branchLength} ${branchY - 25}`}
+                stroke="rgba(255,255,255,0.1)"
+                strokeWidth={2}
+                fill="none"
+                strokeLinecap="round"
+              />
+            </g>
+          );
+        })}
+        
+        {/* Foliage layers - multiple colors for depth */}
+        <defs>
+          <radialGradient id="leafGrad1">
+            <stop offset="0%" stopColor="#7cb342" />
+            <stop offset="100%" stopColor="#558b2f" />
+          </radialGradient>
+          <radialGradient id="leafGrad2">
+            <stop offset="0%" stopColor="#9ccc65" />
+            <stop offset="100%" stopColor="#7cb342" />
+          </radialGradient>
+          <radialGradient id="leafGrad3">
+            <stop offset="0%" stopColor="#aed581" />
+            <stop offset="100%" stopColor="#9ccc65" />
+          </radialGradient>
+        </defs>
+        
+        {/* Back layer - darkest */}
+        <ellipse
+          cx="125"
+          cy={height - trunkHeight - canopySize / 3 + 30}
+          rx={canopySize * 0.9}
+          ry={canopySize * 0.7}
+          fill="url(#leafGrad1)"
+          opacity="0.8"
+        />
+        
+        {/* Middle layer */}
+        <ellipse
+          cx="125"
+          cy={height - trunkHeight - canopySize / 3.5 + 30}
+          rx={canopySize * 0.75}
+          ry={canopySize * 0.6}
+          fill="url(#leafGrad2)"
+          opacity="0.85"
+        />
+        
+        {/* Front layer - lightest */}
+        <ellipse
+          cx="125"
+          cy={height - trunkHeight - canopySize / 4 + 30}
+          rx={canopySize * 0.6}
+          ry={canopySize * 0.5}
+          fill="url(#leafGrad3)"
+          opacity="0.9"
+        />
+        
+        {/* Individual realistic leaves */}
+        {Array.from({ length: Math.min(leafCount * 2, 40) }).map((_, i) => {
+          const angle = (i / (leafCount * 2)) * Math.PI * 2;
+          const radiusVariation = 0.6 + Math.random() * 0.4;
+          const radius = (canopySize * radiusVariation);
+          const x = 125 + Math.cos(angle) * radius;
+          const y = (height - trunkHeight - canopySize / 3 + 30) + Math.sin(angle) * radius * 0.7;
+          const rotation = angle * 180 / Math.PI + Math.random() * 30;
+          const leafColor = ["#7cb342", "#9ccc65", "#aed581", "#c5e1a5"][Math.floor(Math.random() * 4)];
+          
+          return (
+            <g key={`leaf-${i}`} transform={`translate(${x}, ${y}) rotate(${rotation})`}>
+              {/* Leaf shape */}
+              <ellipse
+                cx="0"
+                cy="0"
+                rx="8"
+                ry="14"
+                fill={leafColor}
+                opacity="0.85"
+              />
+              {/* Leaf vein */}
+              <line
+                x1="0"
+                y1="-14"
+                x2="0"
+                y2="14"
+                stroke="rgba(0,0,0,0.2)"
+                strokeWidth="1"
+              />
+            </g>
+          );
+        })}
+        
+        {/* Flowers/fruits for mature trees */}
+        {leafCount >= 10 && Array.from({ length: Math.min(Math.floor(leafCount / 2), 15) }).map((_, i) => {
+          const angle = (i / 15) * Math.PI * 2 + Math.PI / 6;
+          const radius = canopySize * 0.5;
+          const x = 125 + Math.cos(angle) * radius;
+          const y = (height - trunkHeight - canopySize / 3 + 30) + Math.sin(angle) * radius * 0.7;
+          const colors = ["#ff6b9d", "#ffd93d", "#ff8787", "#95bdff"];
+          const flowerColor = colors[i % colors.length];
+          
+          return (
+            <g key={`flower-${i}`}>
+              {/* Flower with petals */}
+              {[0, 72, 144, 216, 288].map((petal, p) => (
+                <ellipse
+                  key={p}
+                  cx={x}
+                  cy={y}
+                  rx="4"
+                  ry="6"
+                  fill={flowerColor}
+                  opacity="0.9"
+                  transform={`rotate(${petal}, ${x}, ${y})`}
+                />
+              ))}
+              {/* Flower center */}
+              <circle
+                cx={x}
+                cy={y}
+                r="3"
+                fill="#ffd93d"
+                opacity="0.95"
+              />
+            </g>
+          );
+        })}
+        
+        {/* Grass at base */}
+        {Array.from({ length: 20 }).map((_, i) => {
+          const x = 65 + i * 6;
+          const grassHeight = 10 + Math.random() * 8;
+          const sway = Math.sin(i * 0.5) * 2;
+          
+          return (
+            <path
+              key={`grass-${i}`}
+              d={`M${x} ${height + 30} Q${x + sway} ${height + 30 - grassHeight / 2} ${x + sway * 1.5} ${height + 30 - grassHeight}`}
+              stroke="#9ccc65"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              opacity="0.7"
+            />
+          );
+        })}
+      </svg>
+    );
+  };
+
   return (
-    <div className="min-h-screen pb-20 md:pt-20">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8 animate-slide-up">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zen-sea/20 text-zen-sea mb-4">
+    <div className="min-h-screen pb-20 md:pt-20 relative overflow-hidden bg-gradient-to-b from-background via-background/95 to-background">
+      {/* Decorative Background Blobs - matching home page */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-0 -left-40 w-96 h-96 bg-primary/20 rounded-full blob opacity-60" />
+        <div className="absolute top-20 right-0 w-80 h-80 bg-secondary/20 rounded-full blob opacity-50" style={{ animationDelay: "2s" }} />
+        <div className="absolute bottom-40 left-1/4 w-64 h-64 bg-accent/15 rounded-full blob opacity-40" style={{ animationDelay: "4s" }} />
+        <div className="absolute bottom-0 right-1/3 w-72 h-72 bg-primary/15 rounded-full blob opacity-50" style={{ animationDelay: "6s" }} />
+      </div>
+
+      {/* Background Pattern - matching home page */}
+      <div className="fixed inset-0 -z-10 opacity-5">
+        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, hsl(var(--primary)) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+      </div>
+
+      <div className="container mx-auto px-6 md:px-8 lg:px-12 py-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header - matching home page style */}
+          <div className="text-center mb-12 animate-slide-up">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border border-primary/20 mb-4">
               <Moon className="w-4 h-4 animate-twinkle" />
-              <span className="text-sm font-medium">Your Sanctuary</span>
+              <span className="text-sm font-semibold">Your Personal Sanctuary</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-zen-sea via-zen-leaf to-zen-sky bg-clip-text text-transparent">
-              Zen Garden
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+              <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                Zen Garden
+              </span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Create your magical sanctuary by the starry sea. Each star represents a feeling, 
-              each leaf a moment of gratitude. Watch your emotional landscape flourish.
+            <p className="text-lg md:text-xl text-foreground/70 leading-relaxed max-w-3xl mx-auto">
+              Create your magical desert sanctuary under the stars. Draw peaceful patterns in the sand, 
+              plant a gratitude tree, place meditation stones, and watch constellations form above.
             </p>
           </div>
 
-          {/* Background Scene with Illustration */}
+          {/* Interactive Canvas */}
           <div className="mb-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
-            <Card className="overflow-hidden border-2 shadow-float">
-              <div 
-                className="relative h-96 md:h-[500px] cursor-pointer overflow-hidden bg-cover bg-center"
-                style={{ backgroundImage: `url(${zenIllustration})` }}
-                onClick={addStar}
-              >
-                {/* Overlay for interactivity */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20" />
+            <Card className="overflow-hidden border-2 border-primary/20 bg-card/80 backdrop-blur-sm shadow-float hover:shadow-glow transition-all">
+              <div className="relative">
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-[500px] md:h-[600px] cursor-crosshair touch-none"
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onClick={handleCanvasClick}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    startDrawing({ clientX: touch.clientX, clientY: touch.clientY });
+                  }}
+                  onTouchMove={(e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    draw({ clientX: touch.clientX, clientY: touch.clientY });
+                  }}
+                  onTouchEnd={stopDrawing}
+                />
 
-                {/* User-added Stars */}
+                {/* Stars with realistic glow */}
                 {stars.map((star, index) => (
-                  <Sparkles
-                    key={index}
-                    className={`absolute w-5 h-5 ${star.color} animate-twinkle drop-shadow-glow`}
+                  <div
+                    key={`star-${index}`}
+                    className="absolute pointer-events-none animate-twinkle"
                     style={{
                       left: `${star.x}%`,
                       top: `${star.y}%`,
-                      animationDelay: `${index * 0.2}s`,
+                      color: star.color,
+                      filter: `drop-shadow(0 0 12px ${star.color}) drop-shadow(0 0 20px ${star.color})`,
+                      animationDelay: `${index * 0.15}s`,
+                      transform: `scale(${star.size})`
                     }}
-                  />
+                  >
+                    <Sparkles className="w-6 h-6" />
+                    <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs whitespace-nowrap bg-card/95 backdrop-blur-sm px-3 py-1 rounded-full border border-primary/20 font-medium shadow-soft">
+                      {star.emotion}
+                    </span>
+                  </div>
                 ))}
 
-                {/* Gratitude Tree Overlay */}
-                {leaves.length > 0 && (
-                  <div className="absolute bottom-8 right-8 space-y-2 max-w-xs">
-                    {leaves.slice(0, 8).map((leaf, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 animate-slide-up bg-card/90 backdrop-blur-sm px-3 py-2 rounded-full shadow-soft"
-                        style={{ animationDelay: `${index * 100}ms` }}
-                      >
-                        <Leaf className="w-4 h-4 text-zen-leaf animate-float" />
-                        <span className="text-xs font-medium max-w-[200px] truncate">
-                          {leaf}
-                        </span>
-                      </div>
-                    ))}
+                {/* Realistic Stones */}
+                {stones.map((stone, index) => {
+                  const stoneSize = stone.size === "small" ? { w: 40, h: 28 } : stone.size === "medium" ? { w: 56, h: 40 } : { w: 72, h: 52 };
+                  return (
+                    <div
+                      key={`stone-${index}`}
+                      className="absolute pointer-events-none"
+                      style={{
+                        left: `${stone.x}%`,
+                        top: `${stone.y}%`,
+                        transform: "translateX(-50%)"
+                      }}
+                    >
+                      <svg width={stoneSize.w} height={stoneSize.h} viewBox={`0 0 ${stoneSize.w} ${stoneSize.h}`}>
+                        <defs>
+                          <radialGradient id={`stoneGrad-${index}`}>
+                            <stop offset="0%" stopColor="#8d8d8d" />
+                            <stop offset="50%" stopColor="#6b6b6b" />
+                            <stop offset="100%" stopColor="#4a4a4a" />
+                          </radialGradient>
+                          <filter id={`stoneShadow-${index}`}>
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                            <feOffset dx="0" dy="4" result="offsetblur"/>
+                            <feFlood floodColor="#000000" floodOpacity="0.3"/>
+                            <feComposite in2="offsetblur" operator="in"/>
+                            <feMerge>
+                              <feMergeNode/>
+                              <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        <ellipse
+                          cx={stoneSize.w / 2}
+                          cy={stoneSize.h / 2}
+                          rx={stoneSize.w / 2.2}
+                          ry={stoneSize.h / 2.2}
+                          fill={`url(#stoneGrad-${index})`}
+                          filter={`url(#stoneShadow-${index})`}
+                        />
+                        {/* Stone texture */}
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <ellipse
+                            key={i}
+                            cx={stoneSize.w / 2 + (Math.random() - 0.5) * stoneSize.w * 0.4}
+                            cy={stoneSize.h / 2 + (Math.random() - 0.5) * stoneSize.h * 0.4}
+                            rx={Math.random() * 3 + 1}
+                            ry={Math.random() * 2 + 1}
+                            fill="rgba(0,0,0,0.2)"
+                          />
+                        ))}
+                        {/* Highlight */}
+                        <ellipse
+                          cx={stoneSize.w / 2.5}
+                          cy={stoneSize.h / 3}
+                          rx={stoneSize.w / 6}
+                          ry={stoneSize.h / 8}
+                          fill="rgba(255,255,255,0.15)"
+                        />
+                      </svg>
+                    </div>
+                  );
+                })}
+
+                {/* Gratitude Tree */}
+                {renderTree()}
+
+                {/* Constellation Achievement */}
+                {constellation && (
+                  <div className="absolute top-4 left-4 bg-card/95 backdrop-blur-sm px-4 py-3 rounded-full border-2 border-primary/30 shadow-float animate-slide-up">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-5 h-5" style={{ color: constellation.color }} />
+                      <span className="font-semibold">{constellation.emoji} {constellation.pattern}</span>
+                    </div>
                   </div>
                 )}
 
-                {/* Instructions */}
-                <div className="absolute top-4 left-4 right-4 text-center">
-                  <div className="inline-block bg-card/95 backdrop-blur-sm px-6 py-3 rounded-full text-sm border-2 shadow-soft">
-                    <Sparkles className="w-4 h-4 inline mr-2 text-zen-star animate-twinkle" />
-                    Click anywhere to add stars of emotion
+                {/* Tree Growth Status */}
+                {leaves.length > 0 && (
+                  <div className="absolute top-4 right-4 bg-card/95 backdrop-blur-sm px-4 py-3 rounded-full border-2 border-success/30 shadow-float animate-slide-up">
+                    <div className="flex items-center gap-2">
+                      <Leaf className="w-5 h-5 text-success" />
+                      <span className="font-semibold">{treeGrowth.stage} Tree</span>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Stats Overlay */}
-                <div className="absolute bottom-4 left-4 flex gap-4">
-                  <div className="bg-card/95 backdrop-blur-sm px-4 py-2 rounded-full text-sm border-2 shadow-soft">
-                    <StarIcon className="w-4 h-4 inline mr-1 text-zen-star" />
-                    <span className="font-semibold">{stars.length}</span> stars
+                {/* Stats */}
+                <div className="absolute bottom-4 left-4 flex gap-2 flex-wrap">
+                  <div className="bg-card/95 backdrop-blur-sm px-4 py-2 rounded-full text-sm border-2 border-primary/20 shadow-soft">
+                    <Star className="w-4 h-4 inline mr-1 text-primary" />
+                    <span className="font-semibold">{stars.length}</span> <span className="text-muted-foreground">stars</span>
                   </div>
-                  <div className="bg-card/95 backdrop-blur-sm px-4 py-2 rounded-full text-sm border-2 shadow-soft">
-                    <Leaf className="w-4 h-4 inline mr-1 text-zen-leaf" />
-                    <span className="font-semibold">{leaves.length}</span> leaves
+                  <div className="bg-card/95 backdrop-blur-sm px-4 py-2 rounded-full text-sm border-2 border-accent/20 shadow-soft">
+                    <Circle className="w-4 h-4 inline mr-1 text-accent" />
+                    <span className="font-semibold">{stones.length}</span> <span className="text-muted-foreground">stones</span>
+                  </div>
+                  <div className="bg-card/95 backdrop-blur-sm px-4 py-2 rounded-full text-sm border-2 border-success/20 shadow-soft">
+                    <Leaf className="w-4 h-4 inline mr-1 text-success" />
+                    <span className="font-semibold">{leaves.length}</span> <span className="text-muted-foreground">leaves</span>
                   </div>
                 </div>
               </div>
@@ -113,98 +674,217 @@ const ZenGarden = () => {
           </div>
 
           {/* Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="animate-slide-up border-2" style={{ animationDelay: "200ms" }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Mode Selection */}
+            <Card className="border-2 border-primary/20 bg-card/80 backdrop-blur-sm shadow-soft hover:shadow-float transition-all animate-slide-up" style={{ animationDelay: "200ms" }}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-zen-star animate-twinkle" />
-                  Add a Star
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Palette className="w-5 h-5" />
+                  Drawing Mode
                 </CardTitle>
-                <CardDescription>Each star represents a feeling, emotion, or special moment in your journey</CardDescription>
+                <CardDescription>Choose how to create in your sanctuary</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button onClick={addStar} className="w-full group border-2">
-                  <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform" />
-                  Place a Star in Your Sky
+              <CardContent className="space-y-3">
+                <Button
+                  onClick={() => setMode("sand")}
+                  variant={mode === "sand" ? "default" : "outline"}
+                  className="w-full"
+                >
+                  🏖️ Draw in Sand
                 </Button>
-                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-center text-muted-foreground">
-                    ✨ <span className="font-semibold text-foreground">{stars.length}</span> stars are shining in your emotional sky
-                  </p>
-                </div>
+                <Button
+                  onClick={() => setMode("star")}
+                  variant={mode === "star" ? "default" : "outline"}
+                  className="w-full"
+                >
+                  ⭐ Place Stars
+                </Button>
+                <Button
+                  onClick={() => setMode("stone")}
+                  variant={mode === "stone" ? "default" : "outline"}
+                  className="w-full"
+                >
+                  🪨 Place Stones
+                </Button>
               </CardContent>
             </Card>
 
-            <Card className="animate-slide-up border-2" style={{ animationDelay: "300ms" }}>
+            {/* Gratitude Input */}
+            <Card className="border-2 border-success/20 bg-card/80 backdrop-blur-sm shadow-soft hover:shadow-float transition-all animate-slide-up" style={{ animationDelay: "300ms" }}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Leaf className="w-5 h-5 text-zen-leaf animate-float" />
-                  Add a Gratitude Leaf
+                <CardTitle className="flex items-center gap-2 text-success">
+                  <Leaf className="w-5 h-5" />
+                  Gratitude Leaf
                 </CardTitle>
-                <CardDescription>Write what you're grateful for today and watch your tree grow</CardDescription>
+                <CardDescription>Add thankfulness to grow your tree</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="flex gap-2">
                   <Input
                     value={gratitude}
                     onChange={(e) => setGratitude(e.target.value)}
                     placeholder="I'm grateful for..."
                     onKeyPress={(e) => e.key === "Enter" && addLeaf()}
-                    className="border-2"
+                    className="border-success/30 bg-background"
                   />
-                  <Button onClick={addLeaf} size="icon" className="shrink-0">
+                  <Button onClick={addLeaf} size="icon" className="bg-success hover:bg-success/90 shadow-soft">
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
-                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-center text-muted-foreground">
-                    🌿 <span className="font-semibold text-foreground">{leaves.length}</span> leaves of gratitude are growing on your tree
+                <div className="p-3 bg-success/10 rounded-lg border border-success/20">
+                  <p className="text-sm text-center font-medium">
+                    🌳 Your tree is <span className="font-bold text-success">{treeGrowth.stage}</span>
+                  </p>
+                  <p className="text-xs text-center text-muted-foreground mt-1">
+                    {leaves.length < 5 ? "Keep adding gratitude to help it grow!" : 
+                     leaves.length < 10 ? "Your tree is growing beautifully!" :
+                     leaves.length < 15 ? "What a magnificent tree!" :
+                     "Your tree has reached wisdom!"}
                   </p>
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Recent Gratitude List */}
-          {leaves.length > 0 && (
-            <Card className="mt-8 border-2 animate-slide-up" style={{ animationDelay: "400ms" }}>
+            {/* Reset Controls */}
+            <Card className="border-2 border-accent/20 bg-card/80 backdrop-blur-sm shadow-soft hover:shadow-float transition-all animate-slide-up" style={{ animationDelay: "400ms" }}>
               <CardHeader>
-                <CardTitle>🌸 Your Gratitude Garden</CardTitle>
-                <CardDescription>All the beautiful moments you've acknowledged</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <RotateCcw className="w-5 h-5" />
+                  Reset Options
+                </CardTitle>
+                <CardDescription>Clear parts or reset everything</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {leaves.map((leaf, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 p-3 rounded-lg bg-success/5 border border-success/20 hover:bg-success/10 transition-colors"
-                    >
-                      <Leaf className="w-5 h-5 text-zen-leaf mt-0.5 animate-float flex-shrink-0" style={{ animationDelay: `${index * 0.3}s` }} />
-                      <p className="text-sm">{leaf}</p>
-                    </div>
-                  ))}
-                </div>
+              <CardContent className="space-y-3">
+                <Button onClick={resetSandGarden} variant="outline" className="w-full border-primary/30 hover:border-primary">
+                  Clear Sand Drawings
+                </Button>
+                <Button onClick={() => setStars([])} variant="outline" className="w-full border-primary/30 hover:border-primary">
+                  Clear All Stars
+                </Button>
+                <Button onClick={() => setStones([])} variant="outline" className="w-full border-primary/30 hover:border-primary">
+                  Clear All Stones
+                </Button>
+                <Button onClick={clearAll} variant="destructive" className="w-full shadow-soft">
+                  Reset Everything
+                </Button>
               </CardContent>
             </Card>
-          )}
+          </div>
 
-          {/* Info */}
-          <Card className="mt-8 bg-gradient-to-r from-zen-sea/10 to-zen-leaf/10 border-2 animate-slide-up" style={{ animationDelay: "500ms" }}>
+          {/* Constellation Progress */}
+          <Card className="border-2 border-primary/20 bg-card/80 backdrop-blur-sm shadow-soft hover:shadow-float transition-all mb-8 animate-slide-up" style={{ animationDelay: "500ms" }}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Moon className="w-5 h-5 text-zen-sky animate-pulse-soft" />
-                Your Emotional Sanctuary
+                <Star className="w-5 h-5 text-primary" />
+                Emotional Constellation Map
               </CardTitle>
-              <CardDescription className="text-base leading-relaxed">
-                This magical garden is a living reflection of your emotional journey. 
-                Every star you place represents a moment — joy, calm, hope, or peace. 
-                Every gratitude leaf helps your inner tree flourish. 
-                Return here whenever you need to center yourself and remember all the beauty in your life.
+              <CardDescription>
+                Each star represents an emotion. Create constellations by adding more stars to the night sky.
               </CardDescription>
             </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Object.entries(constellations).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className={`p-6 rounded-2xl border-2 text-center transition-all ${
+                      stars.length >= value.points
+                        ? "border-primary bg-primary/10 shadow-glow"
+                        : "border-muted bg-muted/30"
+                    }`}
+                  >
+                    <div className="text-3xl mb-3">{value.emoji}</div>
+                    <div className="text-lg font-bold mb-1">{value.pattern}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {stars.length >= value.points ? (
+                        <span className="text-success font-semibold">✓ Unlocked!</span>
+                      ) : (
+                        <span>{value.points - stars.length} more star{value.points - stars.length !== 1 ? 's' : ''}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Info Card */}
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 shadow-float animate-slide-up" style={{ animationDelay: "600ms" }}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <Moon className="w-6 h-6 text-primary" />
+                Welcome to Your Desert Sanctuary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-foreground/80 text-base leading-relaxed">
+                This is your personal oasis—a magical desert under a starlit sky where you can find peace and express gratitude. 
+                Draw meditative patterns in the sand with your finger or mouse, place glowing stars to represent your emotions, 
+                position meditation stones for balance, and watch your gratitude tree grow from a small sprout into an ancient, 
+                flourishing tree filled with flowers.
+              </p>
+              <div className="grid md:grid-cols-3 gap-4 pt-4">
+                <div className="p-4 bg-card/50 rounded-xl border border-primary/10">
+                  <div className="text-2xl mb-2">🏜️</div>
+                  <div className="font-semibold mb-1">Sand Drawing</div>
+                  <div className="text-sm text-muted-foreground">Create calming patterns that feel like real sand</div>
+                </div>
+                <div className="p-4 bg-card/50 rounded-xl border border-primary/10">
+                  <div className="text-2xl mb-2">⭐</div>
+                  <div className="font-semibold mb-1">Star Emotions</div>
+                  <div className="text-sm text-muted-foreground">Each star captures a moment of feeling</div>
+                </div>
+                <div className="p-4 bg-card/50 rounded-xl border border-primary/10">
+                  <div className="text-2xl mb-2">🌳</div>
+                  <div className="font-semibold mb-1">Gratitude Tree</div>
+                  <div className="text-sm text-muted-foreground">Watch it bloom as you express thanks</div>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes blob {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        @keyframes twinkle {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .blob {
+          animation: blob 7s ease-in-out infinite;
+        }
+        
+        .animate-twinkle {
+          animation: twinkle 2s ease-in-out infinite;
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };
