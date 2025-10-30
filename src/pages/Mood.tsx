@@ -1,14 +1,26 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Smile, Meh, Frown, Heart, Sun, Cloud, Star, TrendingUp, Calendar as CalendarIcon, X, Plus } from "lucide-react";
+import {
+  Smile,
+  Meh,
+  Frown,
+  Heart,
+  Sun,
+  Cloud,
+  Star,
+  TrendingUp,
+  Calendar as CalendarIcon,
+  X,
+  Plus,
+} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfMonth, endOfMonth, isSameDay } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import moodIllustration from "@/assets/mood-illustration.png";
 import EmojiPicker from "emoji-picker-react";
 
@@ -27,167 +39,186 @@ const Mood = () => {
   const [todayEntries, setTodayEntries] = useState<MoodEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-// 🆕 States for adding custom moods with emojis
-const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-const [newMoodName, setNewMoodName] = useState("");
-const [newMoodEmoji, setNewMoodEmoji] = useState("😀");
 
-const [moods, setMoods] = useState([
-  { icon: Smile, label: "Happy", color: "text-success", bg: "bg-success/10 hover:bg-success/20", emoji: "😊" },
-  { icon: Heart, label: "Grateful", color: "text-accent", bg: "bg-accent/10 hover:bg-accent/20", emoji: "💖" },
-  { icon: Sun, label: "Energetic", color: "text-zen-star", bg: "bg-zen-star/10 hover:bg-zen-star/20", emoji: "⚡" },
-  { icon: Meh, label: "Calm", color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20", emoji: "😌" },
-  { icon: Cloud, label: "Tired", color: "text-muted-foreground", bg: "bg-muted hover:bg-muted/80", emoji: "😴" },
-  { icon: Frown, label: "Sad", color: "text-destructive", bg: "bg-destructive/10 hover:bg-destructive/20", emoji: "😢" },
-]);
+  // 🆕 Custom moods with emojis
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [newMoodName, setNewMoodName] = useState("");
+  const [newMoodEmoji, setNewMoodEmoji] = useState("😀");
 
+  // 🧠 Moods directly from calendar
+  const [calendarMood, setCalendarMood] = useState("");
+  const [calendarNote, setCalendarNote] = useState("");
+  const [isAddingMood, setIsAddingMood] = useState(false);
 
+  // 💡 Weekly mood insights
+  const [moodAdvice, setMoodAdvice] = useState("");
+
+  const [moods, setMoods] = useState([
+    { icon: Smile, label: "Happy", color: "text-success", bg: "bg-success/10 hover:bg-success/20", emoji: "😊" },
+    { icon: Heart, label: "Grateful", color: "text-accent", bg: "bg-accent/10 hover:bg-accent/20", emoji: "💖" },
+    { icon: Sun, label: "Energetic", color: "text-zen-star", bg: "bg-zen-star/10 hover:bg-zen-star/20", emoji: "⚡" },
+    { icon: Meh, label: "Calm", color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20", emoji: "😌" },
+    { icon: Cloud, label: "Tired", color: "text-muted-foreground", bg: "bg-muted hover:bg-muted/80", emoji: "😴" },
+    { icon: Frown, label: "Sad", color: "text-destructive", bg: "bg-destructive/10 hover:bg-destructive/20", emoji: "😢" },
+  ]);
+
+  // 🧠 Load from localStorage
   useEffect(() => {
-    fetchMoodEntries();
+    const savedMoods = localStorage.getItem("moodEntries");
+    if (savedMoods) setMoodEntries(JSON.parse(savedMoods));
+  }, []);
+
+  // 🧠 Save to localStorage
+  useEffect(() => {
+    localStorage.setItem("moodEntries", JSON.stringify(moodEntries));
+  }, [moodEntries]);
+
+  // ✅ Fetch from Supabase if logged in
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) fetchMoodEntries();
+    })();
   }, []);
 
   useEffect(() => {
-    const today = format(new Date(), 'yyyy-MM-dd');
-    setTodayEntries(moodEntries.filter(entry => entry.date === today));
+    const today = format(new Date(), "yyyy-MM-dd");
+    setTodayEntries(moodEntries.filter((entry) => entry.date === today));
   }, [moodEntries]);
 
+ useEffect(() => {
+  if (moodEntries.length > 0) {
+    const advice = getMoodAdvice();
+    setMoodAdvice(advice);
+  }
+}, [moodEntries, calendarMood]);
+
+
+  // 🧩 Fetch moods from Supabase (only if logged in)
   const fetchMoodEntries = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('mood_entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
+        .from("mood_entries")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false });
 
       if (error) throw error;
       setMoodEntries(data || []);
     } catch (error) {
-      console.error('Error fetching mood entries:', error);
+      console.error("Error fetching mood entries:", error);
     }
   };
 
+  // ✅ Add mood entry (today)
   const addMoodEntry = async () => {
     if (!selectedMood) {
-      toast({
-        title: "Please select a mood",
-        variant: "destructive"
-      });
+      toast({ title: "Please select a mood", variant: "destructive" });
       return;
     }
 
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Please sign in to save your mood",
-          variant: "destructive"
-        });
-        return;
-      }
+    const newEntry = {
+      id: Date.now().toString(),
+      mood: selectedMood,
+      date: format(new Date(), "yyyy-MM-dd"),
+      note: note || null,
+    };
 
-      const { error } = await supabase
-        .from('mood_entries')
-        .insert({
-          user_id: user.id,
-          mood: selectedMood,
-          date: format(new Date(), 'yyyy-MM-dd'),
-          note: note || null
-        });
+    setMoodEntries((prev) => [...prev, newEntry]);
+    setSelectedMood(null);
+    setNote("");
+    toast({ title: "Mood saved 💙", description: "Your mood has been added locally." });
 
-      if (error) throw error;
-
-      toast({
-        title: "Mood saved! 💙",
-        description: "Your feeling has been recorded."
+    // Optional: Sync with Supabase if logged in
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { error } = await supabase.from("mood_entries").insert({
+        user_id: user.id,
+        mood: selectedMood,
+        date: newEntry.date,
+        note: note || null,
       });
-
-      setSelectedMood(null);
-      setNote("");
-      fetchMoodEntries();
-    } catch (error) {
-      console.error('Error saving mood:', error);
-      toast({
-        title: "Error saving mood",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+      if (!error) fetchMoodEntries();
     }
   };
 
   const deleteMoodEntry = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('mood_entries')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Mood deleted",
-        description: "Entry has been removed."
-      });
-
-      fetchMoodEntries();
-    } catch (error) {
-      console.error('Error deleting mood:', error);
-      toast({
-        title: "Error deleting mood",
-        variant: "destructive"
-      });
-    }
+    setMoodEntries((prev) => prev.filter((entry) => entry.id !== id));
+    toast({ title: "Mood deleted", description: "Removed from your log." });
   };
+
+  // 🧘 Weekly mood advice generator
+  // 🧘 Weekly mood advice generator — now with more emotion-specific insights
+// 🧘 Better weekly mood advice — recognizes emojis and custom moods
+// 🧘 Better weekly mood advice — recognizes emojis and custom moods
+const getMoodAdvice = () => {
+  if (!moodEntries || moodEntries.length === 0) {
+    return "Track a few moods to get your personalized insight 🌈";
+  }
+
+  const moodsCount = moodEntries.reduce((acc, entry) => {
+    const mood = entry.mood.toLowerCase();
+    acc[mood] = (acc[mood] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const mostFrequent = Object.entries(moodsCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+
+  if (mostFrequent.includes("angry") || mostFrequent.includes("😡")) {
+    return "You seem frustrated 😡. Try calming deep breaths, short walks, or journaling to release tension.";
+  }
+  if (mostFrequent.includes("anxious") || mostFrequent.includes("😟") || mostFrequent.includes("😰")) {
+    return "Feeling anxious 😟? Try mindfulness, gentle stretching, or calming music to ground yourself.";
+  }
+  if (mostFrequent.includes("sad") || mostFrequent.includes("😢")) {
+    return "You've been feeling down 💙. It’s okay to rest and talk to someone you trust.";
+  }
+  if (mostFrequent.includes("tired") || mostFrequent.includes("😴")) {
+    return "You’re probably drained 😴 — get some rest, hydrate, and take it easy today.";
+  }
+  if (mostFrequent.includes("calm") || mostFrequent.includes("😌")) {
+    return "You're peaceful 🌿 — keep protecting your calm energy with slow mornings or journaling.";
+  }
+  if (mostFrequent.includes("energetic") || mostFrequent.includes("⚡")) {
+    return "You're energetic ⚡ — channel that spark into creativity or movement!";
+  }
+  if (mostFrequent.includes("grateful") || mostFrequent.includes("💖")) {
+    return "You’re glowing with gratitude 💖 — share it by expressing appreciation to someone.";
+  }
+  if (mostFrequent.includes("happy") || mostFrequent.includes("😊") || mostFrequent.includes("😄")) {
+    return "Happiness shines through 😄! Keep sharing your positivity with those around you 🌈.";
+  }
+
+  return "Track a few more moods to receive deeper weekly insights 🌈";
+};
+
 
   const getMoodForDate = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return moodEntries.filter(entry => entry.date === dateStr);
+    const dateStr = format(date, "yyyy-MM-dd");
+    return moodEntries.filter((entry) => entry.date === dateStr);
   };
 
-  const getMoodEmoji = (moodLabel: string) => {
-    const mood = moods.find(m => m.label === moodLabel);
-    return mood?.emoji || "😊";
-  };
+ // ✅ Smarter emoji detector for both built-in and custom moods
+const getMoodEmoji = (moodLabel: string) => {
+  // if the user already typed an emoji (like "angry 😡" or "sad 😢")
+  const match = moodLabel.match(/(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/gu);
+  if (match && match.length > 0) {
+    return match[match.length - 1]; // return the last emoji typed
+  }
 
-  const getMoodStats = () => {
-    const thisWeek = moodEntries.filter(entry => {
-      const entryDate = new Date(entry.date);
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      return entryDate >= weekAgo;
-    });
+  // otherwise use built-in moods
+  const mood = moods.find((m) => m.label.toLowerCase() === moodLabel.toLowerCase());
+  return mood?.emoji || "🌈";
+};
 
-    const moodCounts = thisWeek.reduce((acc, entry) => {
-      acc[entry.mood] = (acc[entry.mood] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const topMood = Object.entries(moodCounts).sort(([,a], [,b]) => b - a)[0];
-    
-    return {
-      weeklyMood: topMood ? `Mostly ${topMood[0]}` : "No data",
-      weeklyEmoji: topMood ? getMoodEmoji(topMood[0]) : "📊",
-      totalEntries: moodEntries.length,
-      weeklyEntries: thisWeek.length
-    };
-  };
-
-  const stats = getMoodStats();
 
   return (
     <div className="min-h-screen pb-20 md:pt-20 relative overflow-hidden">
-      {/* Decorative background with bubbles */}
+      {/* Floating background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-40 left-20 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-40 right-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "3s" }} />
-        <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-success/20 rounded-full blur-2xl animate-float" style={{ animationDelay: "1s" }} />
-        <div className="absolute bottom-1/3 left-1/3 w-48 h-48 bg-zen-star/15 rounded-full blur-2xl animate-float" style={{ animationDelay: "2s" }} />
-        
-        {/* Animated bubbles */}
         {[...Array(15)].map((_, i) => (
           <div
             key={i}
@@ -206,9 +237,9 @@ const [moods, setMoods] = useState([
 
       <div className="container mx-auto px-6 md:px-8 lg:px-12 py-8 md:py-12">
         <div className="max-w-7xl mx-auto">
-          {/* Header with Illustration */}
+          {/* Header */}
           <div className="grid md:grid-cols-2 gap-8 items-center mb-12">
-            <div className="order-2 md:order-1 text-center md:text-left animate-slide-up">
+            <div className="text-center md:text-left animate-slide-up">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent mb-4">
                 <Heart className="w-4 h-4 animate-pulse-soft" />
                 <span className="text-sm font-medium">Mood Tracker</span>
@@ -217,99 +248,77 @@ const [moods, setMoods] = useState([
                 How Are You Feeling?
               </h1>
               <p className="text-lg text-muted-foreground">
-                Track your emotional journey with love and care. Every feeling matters, and we're here to support you.
+                Track your emotional journey with love and care. Every feeling matters.
               </p>
             </div>
 
-            <div className="order-1 md:order-2 animate-slide-up" style={{ animationDelay: "200ms" }}>
-              <img 
-                src={moodIllustration} 
-                alt="Person holding emotion cards" 
-                className="w-full h-auto drop-shadow-2xl rounded-3xl animate-float"
-              />
+            <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
+              <img src={moodIllustration} alt="Mood Illustration" className="w-full h-auto drop-shadow-2xl rounded-3xl animate-float" />
             </div>
           </div>
 
           {/* Mood Selector */}
-          <Card className="mb-8 animate-slide-up border-2 shadow-float" style={{ animationDelay: "100ms" }}>
+          <Card className="mb-8 animate-slide-up border-2 shadow-float">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Star className="w-5 h-5 text-zen-star animate-twinkle" />
                 Today's Mood Check-In
               </CardTitle>
-              <CardDescription>Select the emotion that best describes how you feel right now</CardDescription>
-  {/* Add New Mood Section */}
-<div className="flex flex-col md:flex-row items-center justify-between gap-3 mt-4">
-  <div className="flex items-center gap-2">
-    <input
-      type="text"
-      value={newMoodName}
-      onChange={(e) => setNewMoodName(e.target.value)}
-      placeholder="Enter mood name"
-      className="border border-primary/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-    />
-    <Button variant="outline" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
-      {newMoodEmoji} Pick Emoji
-    </Button>
-    {showEmojiPicker && (
-      <div className="absolute mt-2 z-50">
-        <EmojiPicker
-          onEmojiClick={(emoji) => {
-            setNewMoodEmoji(emoji.emoji);
-            setShowEmojiPicker(false);
-          }}
-        />
-      </div>
-    )}
-    <Button
-      onClick={() => {
-        if (!newMoodName.trim()) return alert("Enter a mood name!");
-        setMoods([
-          ...moods,
-          { icon: Star, label: newMoodName, color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20", emoji: newMoodEmoji },
-        ]);
-        setNewMoodName("");
-        setNewMoodEmoji("😀");
-      }}
-    >
-      <Plus className="w-4 h-4 mr-2" />
-      Add Mood
-    </Button>
-  </div>
+              <CardDescription>Select how you feel right now</CardDescription>
 
-  <Button
-    variant="destructive"
-    onClick={() => {
-      const label = prompt("Enter mood name to delete:");
-      if (label) {
-        setMoods(moods.filter((m) => m.label.toLowerCase() !== label.toLowerCase()));
-      }
-    }}
-  >
-    <X className="w-4 h-4 mr-2" /> Delete Mood
-  </Button>
-</div>
+              {/* Add Custom Mood */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-3 mt-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newMoodName}
+                    onChange={(e) => setNewMoodName(e.target.value)}
+                    placeholder="Enter mood name"
+                    className="border border-primary/30 rounded-lg px-3 py-2 text-sm"
+                  />
+                  <Button variant="outline" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+                    {newMoodEmoji} Pick Emoji
+                  </Button>
+                  {showEmojiPicker && (
+                    <div className="absolute mt-2 z-50">
+                      <EmojiPicker onEmojiClick={(emoji) => {
+                        setNewMoodEmoji(emoji.emoji);
+                        setShowEmojiPicker(false);
+                      }} />
+                    </div>
+                  )}
+                  <Button
+                    onClick={() => {
+                      if (!newMoodName.trim()) return alert("Enter a mood name!");
+                      setMoods([
+                        ...moods,
+                        { icon: Star, label: newMoodName, color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20", emoji: newMoodEmoji },
+                      ]);
+                      setNewMoodName("");
+                      setNewMoodEmoji("😀");
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Mood
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
 
-          </CardHeader>
             <CardContent>
+              {/* Mood buttons */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {moods.map((mood) => {
                   const Icon = mood.icon;
                   const isSelected = selectedMood === mood.label;
-                  
                   return (
                     <Button
                       key={mood.label}
                       variant="outline"
                       onClick={() => setSelectedMood(mood.label)}
-                      className={cn(
-                        "h-28 flex-col gap-3 transition-all duration-300 border-2",
-                        mood.bg,
-                        isSelected && "ring-2 ring-primary scale-105 shadow-glow"
-                      )}
+                      className={cn("h-28 flex-col gap-3 border-2 transition-all", mood.bg, isSelected && "ring-2 ring-primary scale-105 shadow-glow")}
                     >
                       <div className="flex items-center gap-2">
-                        <Icon className={cn("w-6 h-6", mood.color, isSelected && "animate-bounce-in")} />
+                        <Icon className={cn("w-6 h-6", mood.color)} />
                         <span className="text-2xl">{mood.emoji}</span>
                       </div>
                       <span className="text-sm font-medium">{mood.label}</span>
@@ -317,53 +326,36 @@ const [moods, setMoods] = useState([
                   );
                 })}
               </div>
-              
+
+              {/* Add note */}
               {selectedMood && (
-                <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border-2 border-primary/20 animate-slide-up">
+                <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border-2 border-primary/20">
                   <p className="text-sm text-center mb-4">
-                    You're feeling <span className="font-semibold text-primary">{selectedMood}</span> today. 
-                    That's wonderful to acknowledge! 💙
+                    You're feeling <span className="font-semibold text-primary">{selectedMood}</span> today 💙
                   </p>
-                  <Textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Add a note about how you're feeling (optional)..."
-                    className="mb-3"
-                  />
-                  <Button onClick={addMoodEntry} disabled={loading} className="w-full">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Mood Entry
+                  <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note (optional)" />
+                  <Button onClick={addMoodEntry} disabled={loading} className="w-full mt-3">
+                    <Plus className="w-4 h-4 mr-2" /> Add Mood Entry
                   </Button>
                 </div>
               )}
 
-              {/* Today's mood entries */}
+              {/* Today's entries */}
               {todayEntries.length > 0 && (
                 <div className="mt-6 space-y-3">
                   <h3 className="text-sm font-medium flex items-center gap-2">
-                    <Star className="w-4 h-4 text-zen-star" />
-                    Today's Entries ({todayEntries.length})
+                    <Star className="w-4 h-4 text-zen-star" /> Today's Entries ({todayEntries.length})
                   </h3>
                   {todayEntries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-start justify-between p-3 rounded-lg bg-card border-2 hover:shadow-md transition-all"
-                    >
+                    <div key={entry.id} className="flex items-start justify-between p-3 rounded-lg bg-card border-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
                           <span className="font-medium">{entry.mood}</span>
                         </div>
-                        {entry.note && (
-                          <p className="text-sm text-muted-foreground">{entry.note}</p>
-                        )}
+                        {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteMoodEntry(entry.id)}
-                        className="text-destructive hover:bg-destructive/10"
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => deleteMoodEntry(entry.id)} className="text-destructive hover:bg-destructive/10">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -373,97 +365,68 @@ const [moods, setMoods] = useState([
             </CardContent>
           </Card>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="animate-slide-up border-2 hover:shadow-float transition-all overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardDescription className="text-xs">This Week</CardDescription>
-                  <span className="text-2xl animate-float">{stats.weeklyEmoji}</span>
-                </div>
-                <CardTitle className="text-xl text-success">
-                  {stats.weeklyMood}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full rounded-full bg-success transition-all duration-1000"
-                    style={{ width: `${Math.min((stats.weeklyEntries / 7) * 100, 100)}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="animate-slide-up border-2 hover:shadow-float transition-all overflow-hidden" style={{ animationDelay: "100ms" }}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardDescription className="text-xs">Total Entries</CardDescription>
-                  <span className="text-2xl animate-float">📊</span>
-                </div>
-                <CardTitle className="text-xl text-primary">
-                  {stats.totalEntries} Entries
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full rounded-full bg-primary transition-all duration-1000"
-                    style={{ width: "100%" }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="animate-slide-up border-2 hover:shadow-float transition-all overflow-hidden" style={{ animationDelay: "200ms" }}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardDescription className="text-xs">This Week</CardDescription>
-                  <span className="text-2xl animate-float">🔥</span>
-                </div>
-                <CardTitle className="text-xl text-accent">
-                  {stats.weeklyEntries} Days
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full rounded-full bg-accent transition-all duration-1000"
-                    style={{ width: `${(stats.weeklyEntries / 7) * 100}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Mood Calendar */}
-          <Card className="animate-slide-up border-2" style={{ animationDelay: "500ms" }}>
+          {/* 📅 Mood Calendar */}
+          <Card className="animate-slide-up border-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <CalendarIcon className="w-5 h-5 text-accent" />
-                Mood Calendar
+                <CalendarIcon className="w-5 h-5 text-accent" /> Mood Calendar
               </CardTitle>
-              <CardDescription>
-                View and manage your mood history. Click on any date to see or edit entries.
-              </CardDescription>
+              <CardDescription>Track moods and add emoji entries directly on your calendar.</CardDescription>
             </CardHeader>
+
             <CardContent>
               <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-1">
+                  {/* ➕ Add Mood to Calendar */}
+                  {selectedDate && (
+                    <div className="mb-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+                      <h3 className="font-medium mb-2">
+                        Add Mood for {format(selectedDate, "MMMM d, yyyy")}
+                      </h3>
+                      <div className="flex items-center gap-3 mb-3">
+                        <input
+                          type="text"
+                          value={calendarMood}
+                          onChange={(e) => setCalendarMood(e.target.value)}
+                          placeholder="Type your mood (e.g. Anxious 😟)"
+                          className="w-full rounded-md border p-2 text-sm"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            if (!calendarMood.trim()) return;
+                            setIsAddingMood(true);
+                            try {
+                              const localEntry = {
+                                id: Date.now().toString(),
+                                mood: calendarMood,
+                                date: format(selectedDate, "yyyy-MM-dd"),
+                                note: calendarNote || null,
+                              };
+                              setMoodEntries((prev) => [...prev, localEntry]);
+                              toast({ title: "Mood added 💜", description: "Added to calendar." });
+                              setCalendarMood("");
+                            } catch (err) {
+                              console.error(err);
+                              toast({ title: "Error adding mood", variant: "destructive" });
+                            } finally {
+                              setIsAddingMood(false);
+                            }
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" /> Add
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
-                  className="rounded-2xl border-2 border-primary/30 p-5 bg-white/70 shadow-md backdrop-blur-md"
-
+                    className="rounded-lg border-2 border-primary/20 p-4 bg-white shadow-soft"
                     modifiers={{
-                      hasMood: (date) => {
-                        const entries = getMoodForDate(date);
-                        return entries.length > 0;
-                      }
-                    }}
-                    modifiersClassNames={{
-                      hasMood: "bg-primary/20 font-bold"
+                      hasMood: (date) => getMoodForDate(date).length > 0,
                     }}
                     components={{
                       Day: ({ date, ...props }) => {
@@ -475,110 +438,62 @@ const [moods, setMoods] = useState([
                               <button
                                 {...props}
                                 className={cn(
-                                  "relative h-9 w-9 p-0 font-normal hover:bg-accent/50 rounded-md transition-all",
+                                  "relative h-9 w-9 p-0 hover:bg-accent/50 rounded-md transition-all",
                                   isToday && "bg-accent text-accent-foreground font-bold",
                                   entries.length > 0 && "ring-2 ring-primary"
                                 )}
                               >
-                                <span>{format(date, 'd')}</span>
+                                <span>{format(date, "d")}</span>
                                 {entries.length > 0 && (
                                   <div className="absolute -top-1 -right-1 flex gap-0.5">
                                     {entries.slice(0, 3).map((entry, i) => (
-                                      <span key={i} className="text-xs">
-                                        {getMoodEmoji(entry.mood)}
-                                      </span>
+                                      <span key={i} className="text-xs">{getMoodEmoji(entry.mood)}</span>
                                     ))}
                                   </div>
                                 )}
                               </button>
                             </PopoverTrigger>
+
                             {entries.length > 0 && (
-                            <PopoverContent className="w-80" align="center">
-  <div className="space-y-3">
-    <h4 className="font-medium">{format(date, 'MMMM d, yyyy')}</h4>
-
-    {entries.map((entry) => (
-      <div
-        key={entry.id}
-        className="flex items-start justify-between p-3 rounded-lg bg-muted"
-      >
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
-            <span className="font-medium">{entry.mood}</span>
-          </div>
-          {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => deleteMoodEntry(entry.id)}
-          className="text-destructive hover:bg-destructive/10 flex-shrink-0"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
-    ))}
-
-    {/* ➕ Add new emoji directly to date */}
-    <div className="mt-3 border-t pt-3">
-      <p className="text-sm mb-2">Add emoji for this date:</p>
-      <EmojiPicker
-        onEmojiClick={(emoji) => {
-          setNote(`Custom emoji ${emoji.emoji} added for ${format(date, 'MMMM d')}`);
-          addMoodEntry();
-        }}
-      />
-    </div>
-  </div>
-</PopoverContent>
-
+                              <PopoverContent className="w-80" align="center">
+                                <div className="space-y-3">
+                                  <h4 className="font-medium">{format(date, "MMMM d, yyyy")}</h4>
+                                  {entries.map((entry) => (
+                                    <div key={entry.id} className="flex items-start justify-between p-3 rounded-lg bg-muted">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
+                                          <span className="font-medium">{entry.mood}</span>
+                                        </div>
+                                        {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => deleteMoodEntry(entry.id)}
+                                        className="text-destructive hover:bg-destructive/10"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </PopoverContent>
                             )}
                           </Popover>
                         );
-                      }
+                      },
                     }}
                   />
                 </div>
 
-                {/* Selected date info */}
-                {selectedDate && (
-                  <div className="lg:w-80">
-                    <div className="sticky top-4">
-                      <h3 className="font-medium mb-3">{format(selectedDate, 'MMMM d, yyyy')}</h3>
-                      {getMoodForDate(selectedDate).length > 0 ? (
-                        <div className="space-y-2">
-                          {getMoodForDate(selectedDate).map((entry) => (
-                            <div
-                              key={entry.id}
-                              className="p-3 rounded-lg bg-card border-2 hover:shadow-md transition-all"
-                            >
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
-                                  <span className="font-medium">{entry.mood}</span>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteMoodEntry(entry.id)}
-                                  className="text-destructive hover:bg-destructive/10 h-8 w-8"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                              {entry.note && (
-                                <p className="text-sm text-muted-foreground">{entry.note}</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No mood entries for this date.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* Weekly Mood Advice */}
+                <div className="lg:w-80 mt-6 lg:mt-0 p-4 border-2 border-accent/30 rounded-xl bg-accent/5 shadow-soft">
+                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-accent" /> Weekly Mood Insight
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{moodAdvice}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
