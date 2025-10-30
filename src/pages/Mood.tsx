@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, isSameDay } from "date-fns";
 import moodIllustration from "@/assets/mood-illustration.png";
+import EmojiPicker from "emoji-picker-react";
 
 interface MoodEntry {
   id: string;
@@ -26,15 +27,20 @@ const Mood = () => {
   const [todayEntries, setTodayEntries] = useState<MoodEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+// 🆕 States for adding custom moods with emojis
+const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+const [newMoodName, setNewMoodName] = useState("");
+const [newMoodEmoji, setNewMoodEmoji] = useState("😀");
 
-  const moods = [
-    { icon: Smile, label: "Happy", color: "text-success", bg: "bg-success/10 hover:bg-success/20", emoji: "😊" },
-    { icon: Heart, label: "Grateful", color: "text-accent", bg: "bg-accent/10 hover:bg-accent/20", emoji: "💖" },
-    { icon: Sun, label: "Energetic", color: "text-zen-star", bg: "bg-zen-star/10 hover:bg-zen-star/20", emoji: "⚡" },
-    { icon: Meh, label: "Calm", color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20", emoji: "😌" },
-    { icon: Cloud, label: "Tired", color: "text-muted-foreground", bg: "bg-muted hover:bg-muted/80", emoji: "😴" },
-    { icon: Frown, label: "Sad", color: "text-destructive", bg: "bg-destructive/10 hover:bg-destructive/20", emoji: "😢" },
-  ];
+const [moods, setMoods] = useState([
+  { icon: Smile, label: "Happy", color: "text-success", bg: "bg-success/10 hover:bg-success/20", emoji: "😊" },
+  { icon: Heart, label: "Grateful", color: "text-accent", bg: "bg-accent/10 hover:bg-accent/20", emoji: "💖" },
+  { icon: Sun, label: "Energetic", color: "text-zen-star", bg: "bg-zen-star/10 hover:bg-zen-star/20", emoji: "⚡" },
+  { icon: Meh, label: "Calm", color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20", emoji: "😌" },
+  { icon: Cloud, label: "Tired", color: "text-muted-foreground", bg: "bg-muted hover:bg-muted/80", emoji: "😴" },
+  { icon: Frown, label: "Sad", color: "text-destructive", bg: "bg-destructive/10 hover:bg-destructive/20", emoji: "😢" },
+]);
+
 
   useEffect(() => {
     fetchMoodEntries();
@@ -232,7 +238,59 @@ const Mood = () => {
                 Today's Mood Check-In
               </CardTitle>
               <CardDescription>Select the emotion that best describes how you feel right now</CardDescription>
-            </CardHeader>
+  {/* Add New Mood Section */}
+<div className="flex flex-col md:flex-row items-center justify-between gap-3 mt-4">
+  <div className="flex items-center gap-2">
+    <input
+      type="text"
+      value={newMoodName}
+      onChange={(e) => setNewMoodName(e.target.value)}
+      placeholder="Enter mood name"
+      className="border border-primary/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+    />
+    <Button variant="outline" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+      {newMoodEmoji} Pick Emoji
+    </Button>
+    {showEmojiPicker && (
+      <div className="absolute mt-2 z-50">
+        <EmojiPicker
+          onEmojiClick={(emoji) => {
+            setNewMoodEmoji(emoji.emoji);
+            setShowEmojiPicker(false);
+          }}
+        />
+      </div>
+    )}
+    <Button
+      onClick={() => {
+        if (!newMoodName.trim()) return alert("Enter a mood name!");
+        setMoods([
+          ...moods,
+          { icon: Star, label: newMoodName, color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20", emoji: newMoodEmoji },
+        ]);
+        setNewMoodName("");
+        setNewMoodEmoji("😀");
+      }}
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add Mood
+    </Button>
+  </div>
+
+  <Button
+    variant="destructive"
+    onClick={() => {
+      const label = prompt("Enter mood name to delete:");
+      if (label) {
+        setMoods(moods.filter((m) => m.label.toLowerCase() !== label.toLowerCase()));
+      }
+    }}
+  >
+    <X className="w-4 h-4 mr-2" /> Delete Mood
+  </Button>
+</div>
+
+          </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {moods.map((mood) => {
@@ -396,7 +454,8 @@ const Mood = () => {
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
-                    className="rounded-md border"
+                  className="rounded-2xl border-2 border-primary/30 p-5 bg-white/70 shadow-md backdrop-blur-md"
+
                     modifiers={{
                       hasMood: (date) => {
                         const entries = getMoodForDate(date);
@@ -434,37 +493,46 @@ const Mood = () => {
                               </button>
                             </PopoverTrigger>
                             {entries.length > 0 && (
-                              <PopoverContent className="w-80" align="center">
-                                <div className="space-y-3">
-                                  <h4 className="font-medium">
-                                    {format(date, 'MMMM d, yyyy')}
-                                  </h4>
-                                  {entries.map((entry) => (
-                                    <div
-                                      key={entry.id}
-                                      className="flex items-start justify-between p-3 rounded-lg bg-muted"
-                                    >
-                                      <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
-                                          <span className="font-medium">{entry.mood}</span>
-                                        </div>
-                                        {entry.note && (
-                                          <p className="text-sm text-muted-foreground">{entry.note}</p>
-                                        )}
-                                      </div>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => deleteMoodEntry(entry.id)}
-                                        className="text-destructive hover:bg-destructive/10 flex-shrink-0"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </PopoverContent>
+                            <PopoverContent className="w-80" align="center">
+  <div className="space-y-3">
+    <h4 className="font-medium">{format(date, 'MMMM d, yyyy')}</h4>
+
+    {entries.map((entry) => (
+      <div
+        key={entry.id}
+        className="flex items-start justify-between p-3 rounded-lg bg-muted"
+      >
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
+            <span className="font-medium">{entry.mood}</span>
+          </div>
+          {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => deleteMoodEntry(entry.id)}
+          className="text-destructive hover:bg-destructive/10 flex-shrink-0"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+    ))}
+
+    {/* ➕ Add new emoji directly to date */}
+    <div className="mt-3 border-t pt-3">
+      <p className="text-sm mb-2">Add emoji for this date:</p>
+      <EmojiPicker
+        onEmojiClick={(emoji) => {
+          setNote(`Custom emoji ${emoji.emoji} added for ${format(date, 'MMMM d')}`);
+          addMoodEntry();
+        }}
+      />
+    </div>
+  </div>
+</PopoverContent>
+
                             )}
                           </Popover>
                         );
