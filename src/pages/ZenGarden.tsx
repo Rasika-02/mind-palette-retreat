@@ -147,29 +147,53 @@ const ZenGarden = () => {
     
     const ctx = ctxRef.current;
     
-    // Darker sand trail
-    ctx.strokeStyle = "rgba(160, 130, 90, 0.6)";
+    // Deep groove - darkest shadow
+    ctx.strokeStyle = "rgba(101, 67, 33, 0.8)";
+    ctx.lineWidth = 20;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    
+    // Inner shadow
+    ctx.strokeStyle = "rgba(139, 90, 43, 0.6)";
+    ctx.lineWidth = 16;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    
+    // Mid-tone displaced sand
+    ctx.strokeStyle = "rgba(160, 120, 70, 0.5)";
     ctx.lineWidth = 12;
     ctx.lineTo(x, y);
     ctx.stroke();
     
-    // Medium shadow
-    ctx.strokeStyle = "rgba(180, 145, 105, 0.4)";
-    ctx.lineWidth = 8;
+    // Edges - pushed up sand
+    ctx.strokeStyle = "rgba(200, 165, 120, 0.4)";
+    ctx.lineWidth = 24;
     ctx.lineTo(x, y);
     ctx.stroke();
     
-    // Light center
-    ctx.strokeStyle = "rgba(230, 210, 180, 0.5)";
-    ctx.lineWidth = 4;
+    // Light rim - sand catching light
+    ctx.strokeStyle = "rgba(245, 220, 180, 0.3)";
+    ctx.lineWidth = 28;
     ctx.lineTo(x, y);
     ctx.stroke();
 
-    // Add sand particles
+    // Displaced sand particles around the groove
+    for (let i = 0; i < 8; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 10 + Math.random() * 15;
+      const offsetX = x + Math.cos(angle) * distance;
+      const offsetY = y + Math.sin(angle) * distance;
+      const size = Math.random() * 2 + 1;
+      
+      ctx.fillStyle = `rgba(${180 + Math.random() * 40}, ${140 + Math.random() * 40}, ${90 + Math.random() * 30}, ${0.2 + Math.random() * 0.3})`;
+      ctx.fillRect(offsetX, offsetY, size, size);
+    }
+    
+    // Add texture variation in the groove
     for (let i = 0; i < 3; i++) {
-      const offsetX = x + (Math.random() - 0.5) * 15;
-      const offsetY = y + (Math.random() - 0.5) * 15;
-      ctx.fillStyle = "rgba(200, 160, 120, 0.3)";
+      const offsetX = x + (Math.random() - 0.5) * 8;
+      const offsetY = y + (Math.random() - 0.5) * 8;
+      ctx.fillStyle = "rgba(80, 50, 20, 0.3)";
       ctx.fillRect(offsetX, offsetY, 1, 1);
     }
   };
@@ -261,226 +285,299 @@ const ZenGarden = () => {
     if (leaves.length === 0) return null;
 
     const { height, branches, leafCount } = treeGrowth;
-    const trunkHeight = height * 0.5;
-    const canopySize = height * 0.6;
+    const trunkWidth = 25 + leafCount * 1.5;
+    const trunkHeight = height * 0.55;
 
     return (
       <svg
-        width="250"
+        width="320"
         height={height + 40}
-        viewBox={`0 0 250 ${height + 40}`}
-        className="absolute bottom-0 left-8"
-        style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))" }}
+        viewBox={`0 0 320 ${height + 40}`}
+        className="absolute bottom-0 left-12"
+        style={{ filter: "drop-shadow(2px 4px 12px rgba(0,0,0,0.4))" }}
       >
-        {/* Ground integration */}
-        <ellipse
-          cx="125"
-          cy={height + 30}
-          rx="60"
-          ry="15"
-          fill="rgba(139, 115, 85, 0.3)"
-        />
-        
-        {/* Trunk with texture */}
         <defs>
-          <linearGradient id="trunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#5d4037" />
-            <stop offset="50%" stopColor="#6d4c41" />
-            <stop offset="100%" stopColor="#4e342e" />
-          </linearGradient>
-          <pattern id="barkPattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
-            <rect width="8" height="8" fill="#5d4037"/>
-            <path d="M0,4 Q4,2 8,4" stroke="#4e342e" strokeWidth="0.5" fill="none"/>
+          {/* Realistic bark texture */}
+          <pattern id="barkTexture" x="0" y="0" width="20" height="30" patternUnits="userSpaceOnUse">
+            <rect width="20" height="30" fill="#3e2723"/>
+            <path d="M 0,5 Q 5,3 10,5 T 20,5" stroke="#2c1810" strokeWidth="1.5" fill="none"/>
+            <path d="M 0,12 Q 7,10 14,12 T 20,12" stroke="#2c1810" strokeWidth="1" fill="none"/>
+            <path d="M 0,20 Q 6,18 12,20 T 20,20" stroke="#2c1810" strokeWidth="1.2" fill="none"/>
+            <path d="M 0,28 Q 8,26 16,28 T 20,28" stroke="#2c1810" strokeWidth="1" fill="none"/>
+            <circle cx="5" cy="8" r="0.8" fill="#2c1810"/>
+            <circle cx="14" cy="16" r="0.6" fill="#2c1810"/>
+            <circle cx="8" cy="24" r="0.7" fill="#2c1810"/>
           </pattern>
+          
+          {/* Trunk gradient */}
+          <linearGradient id="trunkGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#3e2723" />
+            <stop offset="30%" stopColor="#4e342e" />
+            <stop offset="60%" stopColor="#5d4037" />
+            <stop offset="100%" stopColor="#3e2723" />
+          </linearGradient>
+
+          {/* Shadow gradient */}
+          <radialGradient id="groundShadow">
+            <stop offset="0%" stopColor="rgba(0,0,0,0.4)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+          </radialGradient>
         </defs>
-        
-        <rect
-          x="105"
-          y={height - trunkHeight + 30}
-          width="40"
-          height={trunkHeight}
-          fill="url(#trunkGrad)"
-          rx="8"
+
+        {/* Ground shadow */}
+        <ellipse
+          cx="80"
+          cy={height + 35}
+          rx="70"
+          ry="12"
+          fill="url(#groundShadow)"
         />
-        <rect
-          x="105"
-          y={height - trunkHeight + 30}
-          width="40"
-          height={trunkHeight}
-          fill="url(#barkPattern)"
-          opacity="0.4"
-          rx="8"
+
+        {/* Root system emerging from ground */}
+        {leafCount >= 5 && (
+          <g opacity="0.7">
+            <path
+              d={`M 80,${height + 30} Q 60,${height + 25} 50,${height + 20} Q 45,${height + 18} 40,${height + 20}`}
+              stroke="#4e342e"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d={`M 80,${height + 30} Q 100,${height + 25} 110,${height + 20} Q 115,${height + 18} 120,${height + 20}`}
+              stroke="#4e342e"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d={`M 75,${height + 32} Q 70,${height + 28} 65,${height + 27}`}
+              stroke="#3e2723"
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+            />
+          </g>
+        )}
+
+        {/* Main trunk with realistic texture */}
+        <path
+          d={`M ${80 - trunkWidth/2},${height + 30} 
+              Q ${80 - trunkWidth/2.5},${height + 10} ${80 - trunkWidth/3},${height - trunkHeight/2}
+              Q ${80 - trunkWidth/4},${height - trunkHeight} ${80},${height - trunkHeight - 20}
+              Q ${80 + trunkWidth/4},${height - trunkHeight} ${80 + trunkWidth/3},${height - trunkHeight/2}
+              Q ${80 + trunkWidth/2.5},${height + 10} ${80 + trunkWidth/2},${height + 30} Z`}
+          fill="url(#trunkGradient)"
         />
         
-        {/* Trunk highlights */}
-        <rect
-          x="108"
-          y={height - trunkHeight + 30}
-          width="6"
-          height={trunkHeight}
-          fill="rgba(255,255,255,0.1)"
-          rx="3"
+        {/* Bark texture overlay */}
+        <path
+          d={`M ${80 - trunkWidth/2},${height + 30} 
+              Q ${80 - trunkWidth/2.5},${height + 10} ${80 - trunkWidth/3},${height - trunkHeight/2}
+              Q ${80 - trunkWidth/4},${height - trunkHeight} ${80},${height - trunkHeight - 20}
+              Q ${80 + trunkWidth/4},${height - trunkHeight} ${80 + trunkWidth/3},${height - trunkHeight/2}
+              Q ${80 + trunkWidth/2.5},${height + 10} ${80 + trunkWidth/2},${height + 30} Z`}
+          fill="url(#barkTexture)"
+          opacity="0.6"
         />
-        
-        {/* Main branches */}
-        {Array.from({ length: branches }).map((_, i) => {
-          const branchY = height - trunkHeight + 40 + (trunkHeight / (branches + 1)) * i;
-          const branchLength = 30 + i * 4;
+
+        {/* Trunk highlights and shadows for depth */}
+        <path
+          d={`M ${80 - trunkWidth/2.8},${height + 25} Q ${80 - trunkWidth/3.5},${height - trunkHeight/2} ${80 - trunkWidth/5},${height - trunkHeight - 15}`}
+          stroke="rgba(0,0,0,0.3)"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d={`M ${80 + trunkWidth/2.8},${height + 25} Q ${80 + trunkWidth/3.5},${height - trunkHeight/2} ${80 + trunkWidth/5},${height - trunkHeight - 15}`}
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+        />
+
+        {/* Main branches - realistic curves */}
+        {Array.from({ length: Math.min(branches, 10) }).map((_, i) => {
+          const branchStart = height - trunkHeight + (trunkHeight / (branches + 2)) * (i + 1);
           const isLeft = i % 2 === 0;
-          const curve = 20 + i * 2;
+          const branchLength = 35 + i * 6;
+          const thickness = Math.max(8 - i * 0.5, 3);
+          const curve1X = isLeft ? 80 - 15 - i * 3 : 80 + 15 + i * 3;
+          const curve1Y = branchStart - 15;
+          const endX = isLeft ? 80 - branchLength : 80 + branchLength;
+          const endY = branchStart - 30 - i * 2;
           
           return (
             <g key={`branch-${i}`}>
+              {/* Branch shadow */}
               <path
-                d={`M125 ${branchY} Q${isLeft ? 125 - curve : 125 + curve} ${branchY - 10} ${isLeft ? 125 - branchLength : 125 + branchLength} ${branchY - 25}`}
-                stroke="url(#trunkGrad)"
-                strokeWidth={6 - i * 0.3}
+                d={`M 80,${branchStart} Q ${curve1X + 2},${curve1Y + 2} ${endX + 2},${endY + 2}`}
+                stroke="rgba(0,0,0,0.2)"
+                strokeWidth={thickness}
                 fill="none"
                 strokeLinecap="round"
+                strokeLinejoin="round"
               />
-              {/* Branch highlights */}
+              {/* Main branch */}
               <path
-                d={`M125 ${branchY} Q${isLeft ? 125 - curve : 125 + curve} ${branchY - 10} ${isLeft ? 125 - branchLength : 125 + branchLength} ${branchY - 25}`}
-                stroke="rgba(255,255,255,0.1)"
-                strokeWidth={2}
+                d={`M 80,${branchStart} Q ${curve1X},${curve1Y} ${endX},${endY}`}
+                stroke="#4e342e"
+                strokeWidth={thickness}
                 fill="none"
                 strokeLinecap="round"
+                strokeLinejoin="round"
               />
+              {/* Branch highlight */}
+              <path
+                d={`M 80,${branchStart} Q ${curve1X},${curve1Y} ${endX},${endY}`}
+                stroke="rgba(92, 64, 51, 0.8)"
+                strokeWidth={thickness * 0.6}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              
+              {/* Secondary smaller branches */}
+              {leafCount >= 8 && i % 2 === 0 && (
+                <path
+                  d={`M ${endX},${endY} Q ${endX + (isLeft ? -8 : 8)},${endY - 8} ${endX + (isLeft ? -15 : 15)},${endY - 15}`}
+                  stroke="#5d4037"
+                  strokeWidth={thickness * 0.5}
+                  fill="none"
+                  strokeLinecap="round"
+                />
+              )}
             </g>
           );
         })}
-        
-        {/* Foliage layers - multiple colors for depth */}
-        <defs>
-          <radialGradient id="leafGrad1">
-            <stop offset="0%" stopColor="#7cb342" />
-            <stop offset="100%" stopColor="#558b2f" />
-          </radialGradient>
-          <radialGradient id="leafGrad2">
-            <stop offset="0%" stopColor="#9ccc65" />
-            <stop offset="100%" stopColor="#7cb342" />
-          </radialGradient>
-          <radialGradient id="leafGrad3">
-            <stop offset="0%" stopColor="#aed581" />
-            <stop offset="100%" stopColor="#9ccc65" />
-          </radialGradient>
-        </defs>
-        
-        {/* Back layer - darkest */}
-        <ellipse
-          cx="125"
-          cy={height - trunkHeight - canopySize / 3 + 30}
-          rx={canopySize * 0.9}
-          ry={canopySize * 0.7}
-          fill="url(#leafGrad1)"
-          opacity="0.8"
-        />
-        
-        {/* Middle layer */}
-        <ellipse
-          cx="125"
-          cy={height - trunkHeight - canopySize / 3.5 + 30}
-          rx={canopySize * 0.75}
-          ry={canopySize * 0.6}
-          fill="url(#leafGrad2)"
-          opacity="0.85"
-        />
-        
-        {/* Front layer - lightest */}
-        <ellipse
-          cx="125"
-          cy={height - trunkHeight - canopySize / 4 + 30}
-          rx={canopySize * 0.6}
-          ry={canopySize * 0.5}
-          fill="url(#leafGrad3)"
-          opacity="0.9"
-        />
-        
-        {/* Individual realistic leaves */}
-        {Array.from({ length: Math.min(leafCount * 2, 40) }).map((_, i) => {
-          const angle = (i / (leafCount * 2)) * Math.PI * 2;
-          const radiusVariation = 0.6 + Math.random() * 0.4;
-          const radius = (canopySize * radiusVariation);
-          const x = 125 + Math.cos(angle) * radius;
-          const y = (height - trunkHeight - canopySize / 3 + 30) + Math.sin(angle) * radius * 0.7;
-          const rotation = angle * 180 / Math.PI + Math.random() * 30;
-          const leafColor = ["#7cb342", "#9ccc65", "#aed581", "#c5e1a5"][Math.floor(Math.random() * 4)];
+
+        {/* Foliage clusters - realistic grouping */}
+        {Array.from({ length: Math.min(Math.floor(leafCount / 2) + 3, 12) }).map((_, i) => {
+          const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+          const radiusVariation = 0.7 + Math.random() * 0.4;
+          const radius = 45 + leafCount * 2;
+          const clusterX = 80 + Math.cos(angle) * radius * radiusVariation;
+          const clusterY = height - trunkHeight - 40 + Math.sin(angle) * radius * radiusVariation * 0.8;
+          const clusterSize = 25 + Math.random() * 15;
+          
+          // Determine color based on position (depth)
+          const depthColors = ['#2d5016', '#3d6b1f', '#4d7c2f', '#6b9b37', '#7cb342'];
+          const colorIndex = Math.floor((angle + Math.PI/2) / (Math.PI * 2) * depthColors.length);
           
           return (
-            <g key={`leaf-${i}`} transform={`translate(${x}, ${y}) rotate(${rotation})`}>
-              {/* Leaf shape */}
-              <ellipse
-                cx="0"
-                cy="0"
-                rx="8"
-                ry="14"
-                fill={leafColor}
+            <g key={`foliage-${i}`}>
+              {/* Shadow */}
+              <circle
+                cx={clusterX + 2}
+                cy={clusterY + 3}
+                r={clusterSize}
+                fill="rgba(0,0,0,0.15)"
+              />
+              {/* Main cluster */}
+              <circle
+                cx={clusterX}
+                cy={clusterY}
+                r={clusterSize}
+                fill={depthColors[colorIndex % depthColors.length]}
                 opacity="0.85"
               />
-              {/* Leaf vein */}
-              <line
-                x1="0"
-                y1="-14"
-                x2="0"
-                y2="14"
-                stroke="rgba(0,0,0,0.2)"
-                strokeWidth="1"
+              {/* Highlight */}
+              <circle
+                cx={clusterX - clusterSize * 0.3}
+                cy={clusterY - clusterSize * 0.3}
+                r={clusterSize * 0.4}
+                fill="rgba(255,255,255,0.15)"
               />
             </g>
           );
         })}
-        
-        {/* Flowers/fruits for mature trees */}
-        {leafCount >= 10 && Array.from({ length: Math.min(Math.floor(leafCount / 2), 15) }).map((_, i) => {
-          const angle = (i / 15) * Math.PI * 2 + Math.PI / 6;
-          const radius = canopySize * 0.5;
-          const x = 125 + Math.cos(angle) * radius;
-          const y = (height - trunkHeight - canopySize / 3 + 30) + Math.sin(angle) * radius * 0.7;
-          const colors = ["#ff6b9d", "#ffd93d", "#ff8787", "#95bdff"];
-          const flowerColor = colors[i % colors.length];
+
+        {/* Individual leaf details */}
+        {Array.from({ length: Math.min(leafCount * 3, 60) }).map((_, i) => {
+          const angle = (i / (leafCount * 3)) * Math.PI * 2;
+          const radius = 40 + leafCount * 2 + Math.random() * 25;
+          const leafX = 80 + Math.cos(angle) * radius;
+          const leafY = height - trunkHeight - 40 + Math.sin(angle) * radius * 0.75;
+          const rotation = angle * 180 / Math.PI + Math.random() * 60 - 30;
+          const leafColors = ['#558b2f', '#689f38', '#7cb342', '#8bc34a', '#9ccc65'];
+          const leafColor = leafColors[Math.floor(Math.random() * leafColors.length)];
+          
+          return (
+            <g key={`leaf-${i}`} transform={`translate(${leafX}, ${leafY}) rotate(${rotation})`}>
+              <ellipse
+                cx="0" cy="0"
+                rx="5" ry="8"
+                fill={leafColor}
+                opacity="0.9"
+              />
+              <line
+                x1="0" y1="-8"
+                x2="0" y2="8"
+                stroke="rgba(0,0,0,0.2)"
+                strokeWidth="0.5"
+              />
+            </g>
+          );
+        })}
+
+        {/* Flowers for mature trees */}
+        {leafCount >= 10 && Array.from({ length: Math.min(Math.floor(leafCount / 2), 20) }).map((_, i) => {
+          const angle = (i / 20) * Math.PI * 2 + Math.PI / 8;
+          const radius = 45 + leafCount * 2;
+          const flowerX = 80 + Math.cos(angle) * radius;
+          const flowerY = height - trunkHeight - 40 + Math.sin(angle) * radius * 0.75;
+          const flowerColors = ['#e91e63', '#ff9800', '#ffeb3b', '#ff5722', '#f06292'];
+          const flowerColor = flowerColors[i % flowerColors.length];
           
           return (
             <g key={`flower-${i}`}>
-              {/* Flower with petals */}
-              {[0, 72, 144, 216, 288].map((petal, p) => (
+              {/* Petals */}
+              {[0, 60, 120, 180, 240, 300].map((petal, p) => (
                 <ellipse
                   key={p}
-                  cx={x}
-                  cy={y}
+                  cx={flowerX}
+                  cy={flowerY}
                   rx="4"
-                  ry="6"
+                  ry="7"
                   fill={flowerColor}
                   opacity="0.9"
-                  transform={`rotate(${petal}, ${x}, ${y})`}
+                  transform={`rotate(${petal}, ${flowerX}, ${flowerY})`}
                 />
               ))}
-              {/* Flower center */}
+              {/* Center */}
               <circle
-                cx={x}
-                cy={y}
+                cx={flowerX}
+                cy={flowerY}
                 r="3"
-                fill="#ffd93d"
-                opacity="0.95"
+                fill="#ffd54f"
+              />
+              <circle
+                cx={flowerX}
+                cy={flowerY}
+                r="1.5"
+                fill="#ff8f00"
               />
             </g>
           );
         })}
-        
-        {/* Grass at base */}
-        {Array.from({ length: 20 }).map((_, i) => {
-          const x = 65 + i * 6;
-          const grassHeight = 10 + Math.random() * 8;
-          const sway = Math.sin(i * 0.5) * 2;
+
+        {/* Ground grass/vegetation */}
+        {Array.from({ length: 30 }).map((_, i) => {
+          const grassX = 20 + i * 8;
+          const grassHeight = 8 + Math.random() * 12;
+          const sway = Math.sin(i * 0.8) * 3;
+          const grassColor = i % 3 === 0 ? '#7cb342' : i % 3 === 1 ? '#689f38' : '#558b2f';
           
           return (
             <path
               key={`grass-${i}`}
-              d={`M${x} ${height + 30} Q${x + sway} ${height + 30 - grassHeight / 2} ${x + sway * 1.5} ${height + 30 - grassHeight}`}
-              stroke="#9ccc65"
-              strokeWidth="2"
+              d={`M ${grassX},${height + 30} Q ${grassX + sway},${height + 30 - grassHeight / 2} ${grassX + sway * 1.5},${height + 30 - grassHeight}`}
+              stroke={grassColor}
+              strokeWidth="2.5"
               fill="none"
               strokeLinecap="round"
-              opacity="0.7"
+              opacity="0.8"
             />
           );
         })}
