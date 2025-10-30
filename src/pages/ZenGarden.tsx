@@ -290,10 +290,10 @@ const ZenGarden = () => {
 
     return (
       <svg
-        width="320"
+        width="400"
         height={height + 40}
-        viewBox={`0 0 320 ${height + 40}`}
-        className="absolute bottom-0 left-12"
+        viewBox={`0 0 400 ${height + 40}`}
+        className="absolute bottom-0 right-16"
         style={{ filter: "drop-shadow(2px 4px 12px rgba(0,0,0,0.4))" }}
       >
         <defs>
