@@ -1,0 +1,383 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { ChefHat, Trophy, RefreshCw, Sparkles, Utensils, Check, X } from "lucide-react";
+import { toast } from "sonner";
+import confetti from "canvas-confetti";
+
+interface Step {
+  id: string;
+  emoji: string;
+  name: string;
+  description: string;
+}
+
+interface Dish {
+  id: string;
+  name: string;
+  emoji: string;
+  color: string;
+  steps: Step[];
+  description: string;
+}
+
+const dishes: Dish[] = [
+  {
+    id: "burger",
+    name: "Classic Burger",
+    emoji: "🍔",
+    color: "from-amber-400 to-orange-500",
+    description: "Build your perfect burger!",
+    steps: [
+      { id: "bun", emoji: "🍞", name: "Buns", description: "Start with fresh burger buns" },
+      { id: "patty", emoji: "🥩", name: "Patty", description: "Add a juicy beef patty" },
+      { id: "lettuce", emoji: "🥬", name: "Lettuce", description: "Add crispy lettuce" },
+      { id: "tomato", emoji: "🍅", name: "Tomato", description: "Add fresh tomato slices" },
+      { id: "cheese", emoji: "🧀", name: "Cheese", description: "Top with melted cheese" },
+    ],
+  },
+  {
+    id: "pizza",
+    name: "Delicious Pizza",
+    emoji: "🍕",
+    color: "from-red-400 to-orange-400",
+    description: "Make a mouthwatering pizza!",
+    steps: [
+      { id: "dough", emoji: "🫓", name: "Dough", description: "Roll out the pizza dough" },
+      { id: "sauce", emoji: "🍅", name: "Sauce", description: "Spread tomato sauce" },
+      { id: "cheese", emoji: "🧀", name: "Cheese", description: "Add mozzarella cheese" },
+      { id: "pepperoni", emoji: "🥓", name: "Toppings", description: "Add your favorite toppings" },
+      { id: "bake", emoji: "🔥", name: "Bake", description: "Bake in the oven" },
+    ],
+  },
+];
+
+const CookingChallenge = () => {
+  const [gameState, setGameState] = useState<"selection" | "cooking" | "complete">("selection");
+  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [availableIngredients, setAvailableIngredients] = useState<Step[]>([]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (gameState === "cooking") {
+      timer = setInterval(() => {
+        setTimeElapsed((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [gameState]);
+
+  useEffect(() => {
+    if (selectedDish && gameState === "cooking") {
+      // Generate available ingredients (current step + 2 random wrong ones)
+      const currentCorrect = selectedDish.steps[currentStep];
+      const wrongIngredients = selectedDish.steps
+        .filter((_, idx) => idx !== currentStep)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2);
+      
+      const shuffled = [currentCorrect, ...wrongIngredients].sort(() => Math.random() - 0.5);
+      setAvailableIngredients(shuffled);
+    }
+  }, [selectedDish, currentStep, gameState]);
+
+  const handleDishSelect = (dish: Dish) => {
+    setSelectedDish(dish);
+    setGameState("cooking");
+    setCurrentStep(0);
+    setScore(0);
+    setStreak(0);
+    setTimeElapsed(0);
+  };
+
+  const handleIngredientTap = (ingredient: Step) => {
+    if (!selectedDish) return;
+
+    const correctIngredient = selectedDish.steps[currentStep];
+
+    if (ingredient.id === correctIngredient.id) {
+      // Correct!
+      const basePoints = 100;
+      const streakBonus = streak * 20;
+      const timeBonus = Math.max(50 - timeElapsed, 10);
+      const totalPoints = basePoints + streakBonus + timeBonus;
+
+      setScore((prev) => prev + totalPoints);
+      setStreak((prev) => prev + 1);
+
+      toast.success(`✅ Perfect! ${ingredient.name} added!`, {
+        description: `+${totalPoints} points | ${streak + 1}x combo!`,
+      });
+
+      confetti({
+        particleCount: 30,
+        spread: 50,
+        origin: { y: 0.7 },
+        colors: ["#9b87f5", "#F97316", "#22c55e"],
+      });
+
+      if (currentStep + 1 === selectedDish.steps.length) {
+        // Dish complete!
+        setTimeout(() => {
+          setGameState("complete");
+          confetti({
+            particleCount: 200,
+            spread: 120,
+            origin: { y: 0.6 },
+            colors: ["#9b87f5", "#F97316", "#22c55e", "#fbbf24"],
+          });
+        }, 500);
+      } else {
+        setCurrentStep((prev) => prev + 1);
+        setTimeElapsed(0);
+      }
+    } else {
+      // Wrong!
+      setStreak(0);
+      toast.error(`❌ Oops! That's not right`, {
+        description: `Try again! You need ${correctIngredient.name}`,
+      });
+    }
+  };
+
+  const handleReset = () => {
+    setGameState("selection");
+    setSelectedDish(null);
+    setCurrentStep(0);
+    setScore(0);
+    setStreak(0);
+    setTimeElapsed(0);
+  };
+
+  // Selection Screen
+  if (gameState === "selection") {
+    return (
+      <div className="w-full max-w-4xl mx-auto space-y-8">
+        <div className="text-center space-y-4 animate-slide-up">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-accent/20 to-primary/20">
+            <ChefHat className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium">Cooking Challenge</span>
+          </div>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+            Choose Your Dish
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Select a dish and cook it step-by-step to perfection!
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {dishes.map((dish, index) => (
+            <Card
+              key={dish.id}
+              onClick={() => handleDishSelect(dish)}
+              className="group cursor-pointer hover:shadow-float transition-all duration-300 hover:-translate-y-2 border-2 animate-slide-up"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className={`h-4 bg-gradient-to-r ${dish.color}`} />
+              <CardContent className="pt-8 text-center space-y-4">
+                <div className="text-8xl group-hover:scale-110 transition-transform duration-300 animate-float">
+                  {dish.emoji}
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">{dish.name}</h3>
+                  <p className="text-muted-foreground">{dish.description}</p>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Utensils className="w-4 h-4" />
+                  <span>{dish.steps.length} Steps</span>
+                </div>
+                <Button
+                  variant="outline"
+                  className={`w-full bg-gradient-to-r ${dish.color} text-white border-0 hover:opacity-90`}
+                >
+                  Start Cooking
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Complete Screen
+  if (gameState === "complete" && selectedDish) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto border-2 bg-gradient-to-br from-success/10 via-primary/10 to-accent/10">
+        <CardContent className="pt-8 text-center space-y-6">
+          <div className="text-8xl animate-bounce">{selectedDish.emoji}</div>
+          <div>
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-primary via-accent to-success bg-clip-text text-transparent mb-2">
+              Perfect Dish!
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              You cooked a perfect {selectedDish.name}!
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-4xl">
+            {selectedDish.steps.map((step, i) => (
+              <span
+                key={i}
+                className="animate-float"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                {step.emoji}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+            <div className="p-4 rounded-xl bg-primary/10 border-2 border-primary/20">
+              <Trophy className="w-6 h-6 text-primary mx-auto mb-2" />
+              <div className="text-2xl font-bold text-primary">{score}</div>
+              <div className="text-xs text-muted-foreground">Total Score</div>
+            </div>
+            <div className="p-4 rounded-xl bg-accent/10 border-2 border-accent/20">
+              <Sparkles className="w-6 h-6 text-accent mx-auto mb-2" />
+              <div className="text-2xl font-bold text-accent">{streak}x</div>
+              <div className="text-xs text-muted-foreground">Best Combo</div>
+            </div>
+            <div className="p-4 rounded-xl bg-secondary/10 border-2 border-secondary/20">
+              <ChefHat className="w-6 h-6 text-secondary-foreground mx-auto mb-2" />
+              <div className="text-2xl font-bold">{timeElapsed}s</div>
+              <div className="text-xs text-muted-foreground">Time</div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-center">
+            <Button onClick={handleReset} variant="outline" size="lg">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Choose Another Dish
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Cooking Screen
+  if (!selectedDish) return null;
+
+  const totalSteps = selectedDish.steps.length;
+  const progress = ((currentStep + 1) / totalSteps) * 100;
+  const currentStepData = selectedDish.steps[currentStep];
+
+  return (
+    <div className="w-full max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <Card className={`border-2 bg-gradient-to-r from-primary/5 via-accent/5 to-secondary/5`}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`text-5xl animate-float`}>{selectedDish.emoji}</div>
+              <div>
+                <CardTitle className="text-2xl">{selectedDish.name}</CardTitle>
+                <p className="text-sm text-muted-foreground">Follow the steps carefully!</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Progress & Stats */}
+      <Card className="border-2">
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">
+              Step {currentStep + 1} of {totalSteps}
+            </span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Sparkles className="w-4 h-4 text-accent" />
+                <span className="font-bold text-accent">{streak}x Combo</span>
+              </div>
+              <span className="text-muted-foreground">⏱️ {timeElapsed}s</span>
+              <span className="font-bold text-primary">Score: {score}</span>
+            </div>
+          </div>
+          <Progress value={progress} className="h-3" />
+        </CardContent>
+      </Card>
+
+      {/* Current Step */}
+      <Card className="border-2 bg-gradient-to-br from-primary/5 to-accent/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ChefHat className="w-5 h-5 text-primary" />
+            What's Next?
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center p-6 rounded-xl bg-card border-2 border-primary/20">
+            <div className="text-6xl mb-3 animate-bounce">{currentStepData.emoji}</div>
+            <h3 className="text-2xl font-bold mb-2">{currentStepData.name}</h3>
+            <p className="text-muted-foreground">{currentStepData.description}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ingredient Selection */}
+      <Card className="border-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Utensils className="w-5 h-5 text-accent" />
+            Tap the Correct Ingredient
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            {availableIngredients.map((ingredient) => (
+              <Button
+                key={ingredient.id}
+                onClick={() => handleIngredientTap(ingredient)}
+                variant="outline"
+                className="h-32 flex-col gap-3 border-2 hover:scale-105 hover:shadow-lg transition-all hover:border-primary bg-card"
+              >
+                <div className="text-5xl">{ingredient.emoji}</div>
+                <span className="text-sm font-medium">{ingredient.name}</span>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Added Ingredients */}
+      {currentStep > 0 && (
+        <Card className="border-2 bg-gradient-to-r from-success/10 to-primary/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Check className="w-5 h-5 text-success" />
+              Ingredients Added
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              {selectedDish.steps.slice(0, currentStep).map((step, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-success/20 border-2 border-success/30"
+                >
+                  <span className="text-2xl">{step.emoji}</span>
+                  <span className="text-sm font-medium">{step.name}</span>
+                  <Check className="w-4 h-4 text-success" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default CookingChallenge;
