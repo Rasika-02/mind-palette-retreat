@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import mindfulIllustration from "@/assets/mindful-illustration.png";
 import sleepyRain from "@/assets/sleepy-rain-116521.mp3";
-import rainMeditation from "@/assets/meditative-rain-114484.mp3";
+import rainMeditation from "@/assets/meditation-rain-music-1-minute-270982.mp3";
 import ForestMorning from "@/assets/morning-in-the-forest-304565.mp3";
 import Birds from "@/assets/relaxing-piano-in-nature-more-on-httpsmirceaiancubandcampcom-343213.mp3";
 import paino from "@/assets/d-5-425174.mp3";
